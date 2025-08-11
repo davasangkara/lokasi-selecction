@@ -56,9 +56,26 @@
     .item .title{display:flex; align-items:center; gap:8px; justify-content:space-between}
     .badge{font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--stroke); color:#cbd5e1}
     .muted{color:var(--muted)}
-    #map{height:520px; border-radius:14px; border:1px solid var(--stroke)}
-    @media (max-width: 600px){ #map{height:360px} }
-    table{width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--stroke); border-radius:12px; overflow:hidden; margin-top:12px}
+
+    /* MAP responsive + purple theme */
+    #map{
+      height:clamp(300px, 58vh, 580px);
+      border-radius:14px; border:1px solid var(--stroke);
+      overflow:hidden; isolation:isolate; /* make filter safe */
+    }
+    /* tint OSM tiles to purple */
+    .leaflet-pane .leaflet-tile {
+      filter: hue-rotate(285deg) saturate(1.25) brightness(.95) contrast(1.05);
+      -webkit-filter: hue-rotate(285deg) saturate(1.25) brightness(.95) contrast(1.05);
+      transform: translateZ(0);
+    }
+    /* keep vector overlays crisp on top of tinted tiles */
+    .leaflet-overlay-pane svg path { stroke: #8b5cf6 !important; }
+    .leaflet-control-zoom a{ background:#0f172a; color:#fff; border:1px solid var(--stroke) }
+
+    /* Table responsive */
+    .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px}
+    table{min-width:920px; width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--stroke); border-radius:12px; overflow:hidden; margin-top:12px}
     thead th{
       position:sticky; top:0; background:#0e162b; color:#c7d2fe; text-align:left;
       font-weight:600; font-size:12px; letter-spacing:.02em; border-bottom:1px solid var(--stroke); padding:10px 8px
@@ -70,11 +87,40 @@
     .note{font-size:12px; color:var(--muted); margin-top:10px}
     .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0}
     .toast{position: fixed; bottom:14px; right:14px; padding:10px 12px; border-radius:12px; background:#0e162b; border:1px solid var(--stroke); display:none;}
-    .thumb{ width:64px; height:48px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,.15) }
+
+    /* Photo thumb + responsive lightbox */
+    .thumb{ width:72px; height:54px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,.15); cursor:pointer }
+    @media (max-width:560px){ .thumb{ width:60px; height:45px } }
+
+    .modal{
+      position: fixed; inset:0; background:rgba(0,0,0,.6);
+      display:none; align-items:center; justify-content:center; z-index:50;
+      backdrop-filter: blur(2px);
+    }
+    .modal.open{display:flex}
+    .modal-card{
+      position:relative; width:min(94vw, 1000px); border-radius:14px;
+      background:#0b1324; border:1px solid var(--stroke); padding:10px;
+      box-shadow:0 20px 60px rgba(0,0,0,.55);
+    }
+    .modal-img{width:100%; max-height:76vh; object-fit:contain; display:block; border-radius:10px}
+    .caption{margin-top:8px; font-size:12px; color:var(--muted)}
+    .nav{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; pointer-events:none;
+    }
+    .nav button{
+      pointer-events:auto; background:rgba(0,0,0,.35); color:#fff; border:1px solid rgba(255,255,255,.2);
+      width:42px; height:42px; border-radius:999px; cursor:pointer;
+    }
+    .close-btn{
+      position:absolute; top:8px; right:8px; background:#1f2937; color:#fff; border:1px solid rgba(255,255,255,.2);
+      width:36px; height:36px; border-radius:999px; cursor:pointer;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Header -->
     <div class="header">
       <div class="brand">
         <div class="dot"></div>
@@ -88,6 +134,7 @@
     </div>
 
     <div class="grid">
+      <!-- Sidebar -->
       <div class="card">
         <h3>Channel</h3>
         <div class="list">
@@ -113,11 +160,13 @@
         </div>
       </div>
 
+      <!-- Main -->
       <div class="card">
         {% if focus %}
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
             <h3 style="margin:0">Live Map — <code class="mono">{{ focus }}</code></h3>
             <div class="toolbar">
+              <button id="photosBtn" class="btn">Photos</button>
               <button id="fitBtn" class="btn">Fit markers</button>
               <button id="pauseBtn" class="btn">Pause</button>
               <button id="clearBtn" class="btn danger">Clear Data</button>
@@ -126,21 +175,23 @@
 
           <div id="map"></div>
 
-          <table id="tbl">
-            <thead>
-              <tr>
-                <th>Waktu (UTC)</th>
-                <th>Sumber</th>
-                <th>Lat</th>
-                <th>Lon</th>
-                <th>± (m)</th>
-                <th>IP (label)</th>
-                <th>UA</th>
-                <th>Foto</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+          <div class="table-wrap">
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th>Waktu (UTC)</th>
+                  <th>Sumber</th>
+                  <th>Lat</th>
+                  <th>Lon</th>
+                  <th>± (m)</th>
+                  <th>IP (label)</th>
+                  <th>UA</th>
+                  <th>Foto</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
 
           <p class="note">
             Privasi: lokasi/kamera hanya aktif jika user menekan “Buka Hadiah” dan memberi izin.
@@ -152,12 +203,25 @@
     </div>
   </div>
 
+  <!-- Modal Photo Viewer -->
+  <div id="photoModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <button id="closeModal" class="close-btn" title="Tutup">✕</button>
+      <img id="modalImg" class="modal-img" alt="photo">
+      <div class="caption" id="modalCap"></div>
+      <div class="nav">
+        <div style="padding-left:6px"><button id="prevPhoto" title="Sebelumnya">‹</button></div>
+        <div style="padding-right:6px"><button id="nextPhoto" title="Berikutnya">›</button></div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   {% if focus %}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // UI helpers
+    // --- helpers UI ---
     const toast = (msg)=>{ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); };
     document.querySelectorAll('[data-copy]').forEach(b=>{
       b.addEventListener('click', async ()=>{
@@ -165,22 +229,53 @@
       });
     });
 
-    // Map & polling
+    // --- map & polling ---
     const token = {{ focus|tojson }};
     const map = L.map('map',{zoomControl:true}).setView([0,0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OpenStreetMap' }).addTo(map);
 
+    // reflow map on resize (biar responsif maksimal)
+    window.addEventListener('resize', ()=>{ map.invalidateSize(); });
+
     const tbody = document.querySelector('#tbl tbody');
     let lastTs = null, paused = false;
-    let markers = {};
+    let markers = {};                 // id -> {marker,circle}
     let bounds = L.latLngBounds([]);
+    let photoHits = [];               // hanya yang ada fotonya
+    let currentPhotoIdx = -1;
 
+    function openModal(idx){
+      if (idx < 0 || idx >= photoHits.length) return;
+      currentPhotoIdx = idx;
+      const h = photoHits[idx];
+      const modal = document.getElementById('photoModal');
+      const img = document.getElementById('modalImg');
+      const cap = document.getElementById('modalCap');
+      img.src = h.photo_url;
+      cap.textContent = `${h.ts} • ${h.coords.source || '-'} • lat=${h.coords.lat!=null?h.coords.lat.toFixed(6):'-'}, lon=${h.coords.lon!=null?h.coords.lon.toFixed(6):'-'} • ±${h.coords.acc??'-'}m • ${h.ip}${h.ip_label?' ('+h.ip_label+')':''}`;
+      modal.classList.add('open');
+    }
+    function closeModal(){
+      currentPhotoIdx = -1;
+      document.getElementById('photoModal').classList.remove('open');
+    }
+    function nextPhoto(step=1){
+      if (!photoHits.length) return;
+      const idx = (currentPhotoIdx + step + photoHits.length) % photoHits.length;
+      openModal(idx);
+    }
+
+    // buat row tabel + marker
     function addRow(hit){
       const tr = document.createElement('tr');
       const lat = hit.coords.lat, lon = hit.coords.lon, acc = hit.coords.acc ?? '-';
       const src = hit.coords.source || '-';
       const ipLabel = hit.ip + (hit.ip_label ? ` (${hit.ip_label})` : '');
-      const foto = hit.photo_url ? `<a href="${hit.photo_url}" target="_blank"><img class="thumb" src="${hit.photo_url}" alt="photo"></a>` : '-';
+      let fotoCell = '-';
+      if (hit.photo_url){
+        const idx = photoHits.push(hit) - 1;
+        fotoCell = `<img class="thumb photo-open" data-idx="${idx}" src="${hit.photo_url}" alt="photo">`;
+      }
       tr.innerHTML = `
         <td class="mono">${hit.ts}</td>
         <td>${src}</td>
@@ -189,7 +284,7 @@
         <td class="mono">${acc}</td>
         <td class="mono" title="${ipLabel}">${ipLabel}</td>
         <td title="${hit.ua||''}">${(hit.ua||'').slice(0,80)}</td>
-        <td>${foto}</td>
+        <td>${fotoCell}</td>
       `;
       tbody.prepend(tr);
     }
@@ -226,6 +321,7 @@
     setInterval(fetchUpdates, 2500);
     fetchUpdates();
 
+    // toolbar
     document.getElementById('fitBtn').onclick = ()=>{ if (bounds.isValid()) map.fitBounds(bounds.pad(0.25)); };
     document.getElementById('pauseBtn').onclick = (e)=>{ paused = !paused; e.target.textContent = paused ? 'Resume' : 'Pause'; };
     document.getElementById('clearBtn').onclick = async ()=>{
@@ -233,8 +329,35 @@
       tbody.innerHTML = '';
       Object.values(markers).forEach(({marker,circle})=>{ map.removeLayer(marker); map.removeLayer(circle); });
       markers = {}; bounds = L.latLngBounds([]); lastTs = null;
+      photoHits = []; closeModal();
       toast('Data dibersihkan');
     };
+    document.getElementById('photosBtn').onclick = ()=>{
+      if (photoHits.length) openModal(photoHits.length-1);
+      else toast('Belum ada foto');
+    };
+
+    // event delegation: buka modal saat thumbnail di-klik
+    tbody.addEventListener('click', (e)=>{
+      const img = e.target.closest('.photo-open');
+      if (!img) return;
+      const idx = Number(img.dataset.idx || -1);
+      if (idx >= 0) openModal(idx);
+    });
+
+    // modal controls
+    document.getElementById('closeModal').onclick = closeModal;
+    document.getElementById('prevPhoto').onclick = ()=>nextPhoto(-1);
+    document.getElementById('nextPhoto').onclick = ()=>nextPhoto(1);
+    document.getElementById('photoModal').addEventListener('click', (e)=>{
+      if (e.target.id === 'photoModal') closeModal(); // klik backdrop
+    });
+    window.addEventListener('keydown', (e)=>{
+      if (!document.getElementById('photoModal').classList.contains('open')) return;
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') nextPhoto(-1);
+      if (e.key === 'ArrowRight') nextPhoto(1);
+    });
   </script>
   {% endif %}
 </body>

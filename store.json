@@ -55,6 +55,344 @@
             "source": "gps"
           },
           "ip_label": null
+        },
+        {
+          "id": "e255cd97",
+          "ts": "2025-08-11T21:51:37Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "cfa0dacc",
+          "ts": "2025-08-11T21:51:41Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "7423c38f",
+          "ts": "2025-08-11T21:51:42Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "e1833317",
+          "ts": "2025-08-11T21:51:43Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "72c243f6",
+          "ts": "2025-08-11T21:51:43Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "1f93e526",
+          "ts": "2025-08-11T21:51:43Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "847a8fc0",
+          "ts": "2025-08-11T21:51:43Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "9f33fa72",
+          "ts": "2025-08-11T21:51:43Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "87968506",
+          "ts": "2025-08-11T21:51:48Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "298a2391",
+          "ts": "2025-08-11T21:51:50Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "d0112863",
+          "ts": "2025-08-11T21:51:50Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "7db65c7e",
+          "ts": "2025-08-11T21:51:51Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "4a6be98c",
+          "ts": "2025-08-11T21:51:51Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "df9a49c6",
+          "ts": "2025-08-11T21:52:21Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "9e496ee5",
+          "ts": "2025-08-11T21:53:00Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "513fe78c",
+          "ts": "2025-08-11T21:53:48Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "ff558540",
+          "ts": "2025-08-11T21:55:51Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "354cb11f",
+          "ts": "2025-08-11T21:55:54Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "b606a35c",
+          "ts": "2025-08-11T21:56:16Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "b1ca984e",
+          "ts": "2025-08-11T21:56:41Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "87fac0b0",
+          "ts": "2025-08-11T21:56:49Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "f4368842",
+          "ts": "2025-08-11T21:56:52Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "0b79c31e",
+          "ts": "2025-08-11T21:56:53Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "79ee398e",
+          "ts": "2025-08-11T21:56:53Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "3af2c7ef",
+          "ts": "2025-08-11T21:56:53Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        },
+        {
+          "id": "3c40ad50",
+          "ts": "2025-08-11T21:56:53Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
         }
       ]
     }

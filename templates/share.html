@@ -1,60 +1,95 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>{{ app_name }} — Lokasi</title>
   <style>
-    :root{--bg:#0b1020;--card:#0f172a;--text:#e5e7eb}
+    :root{--bg:#0b1020;--surface:#0f172a;--text:#e5e7eb;--stroke:rgba(255,255,255,.12);--accent:#8b5cf6;--ok:#22c55e;--err:#ef4444}
     *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;font-family:system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#0b1020,#111827);color:var(--text)}
-    .wrap{max-width:600px;margin:32px auto;padding:16px}
-    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
+    body{margin:0;min-height:100vh;color:var(--text);font:14px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:radial-gradient(1100px 700px at 80% -10%, #1f2937 0%, #0b1020 40%, #0b1020 100%)}
+    .wrap{max-width:680px;margin:34px auto;padding:16px}
+    .card{background:rgba(255,255,255,.06);border:1px solid var(--stroke);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
     h1{margin:0 0 8px;font-size:clamp(22px,3vw,28px)}
     .note{font-size:13px;opacity:.9}
-    .badge{display:inline-block;font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18)}
-    .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:10px}
-    .stat{background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
+    .status{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:12px; padding:8px 10px; border-radius:999px; border:1px solid var(--stroke); margin:10px 0
+    }
+    .dot{width:8px; height:8px; border-radius:999px; background:linear-gradient(135deg,var(--accent),#22d3ee)}
+    .spinner{
+      width:14px;height:14px;border-radius:999px;border:2px solid rgba(255,255,255,.25);
+      border-left-color: var(--accent); animation: spin 1s linear infinite;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+    .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:10px}
+    .stat{background:#0f172a;border:1px solid var(--stroke);border-radius:12px;padding:12px}
+    .map{margin-top:12px;border-radius:14px;overflow:hidden;border:1px solid var(--stroke)}
+    .ok{border-color: rgba(34,197,94,.5)}
+    .err{border-color: rgba(239,68,68,.5)}
+    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>Konfirmasi Lokasi</h1>
-      <p class="note">Untuk melanjutkan, izinkan akses lokasi. Kami hanya mengirimkan titik koordinat & akurasi untuk keperluan verifikasi kunjungan.</p>
-      <div class="badge" id="status">Menunggu izin…</div>
+      <p class="note">Izinkan akses lokasi agar titik koordinat & akurasi dapat dikirim untuk verifikasi kunjungan.</p>
+
+      <div class="status" id="status">
+        <div class="spinner" id="spin"></div>
+        <span id="status-text">Meminta izin…</span>
+      </div>
 
       <div class="grid">
-        <div class="stat"><div>Latitude</div><strong id="lat">-</strong></div>
-        <div class="stat"><div>Longitude</div><strong id="lon">-</strong></div>
-        <div class="stat"><div>Akurasi</div><strong><span id="acc">-</span> m</strong></div>
-        <div class="stat"><div>Update</div><strong id="ts">-</strong></div>
+        <div class="stat"><div>Latitude</div><strong class="mono" id="lat">-</strong></div>
+        <div class="stat"><div>Longitude</div><strong class="mono" id="lon">-</strong></div>
+        <div class="stat"><div>Akurasi</div><strong class="mono"><span id="acc">-</span> m</strong></div>
+        <div class="stat"><div>Update</div><strong class="mono" id="ts">-</strong></div>
+      </div>
+
+      <div class="map" id="mapWrap" style="display:none">
+        <iframe id="map" width="100%" height="380" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>
       </div>
     </div>
   </div>
 
   <script>
     const token = {{ token|tojson }};
-    const base = {{ base|tojson }};
+    const base  = {{ base|tojson }};
 
-    const statusEl = document.getElementById('status');
+    const status   = document.getElementById('status');
+    const statusTx = document.getElementById('status-text');
+    const spin     = document.getElementById('spin');
     const latEl = document.getElementById('lat');
     const lonEl = document.getElementById('lon');
     const accEl = document.getElementById('acc');
     const tsEl  = document.getElementById('ts');
+    const mapWrap = document.getElementById('mapWrap');
+    const mapIframe = document.getElementById('map');
 
-    function setStatus(t, ok=true){ statusEl.textContent=t; statusEl.style.borderColor = ok?'rgba(96,165,250,.45)':'rgba(248,113,113,.45)'; }
-
+    function setStatus(text, type){
+      statusTx.textContent = text;
+      status.classList.remove('ok','err');
+      if (type==='ok'){ status.classList.add('ok'); spin.style.display='none'; }
+      else if (type==='err'){ status.classList.add('err'); spin.style.display='none'; }
+      else { spin.style.display='inline-block'; }
+    }
+    function buildOSM(lat, lon, km=1.2){
+      const latDelta = km/111.0;
+      const cosLat = Math.max(0.01, Math.abs(Math.cos(lat*Math.PI/180)));
+      const lonDelta = km/(111.320*cosLat);
+      const minLon = lon - lonDelta, minLat = lat - latDelta, maxLon = lon + lonDelta, maxLat = lat + latDelta;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${minLon},${minLat},${maxLon},${maxLat}&layer=mapnik&marker=${lat},${lon}`;
+    }
     async function postLoc(lat, lon, acc){
       try{
-        await fetch(`${base}/api/track/${token}`,{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+        await fetch(`${base}/api/track/${token}`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ lat, lon, acc })
         });
       }catch(e){}
     }
-
     function onSuccess(pos){
       const { latitude, longitude, accuracy } = pos.coords;
       const ts = new Date(pos.timestamp);
@@ -62,29 +97,28 @@
       lonEl.textContent = longitude.toFixed(6);
       accEl.textContent = (accuracy||0).toFixed(1);
       tsEl.textContent = ts.toLocaleString();
-      setStatus('Lokasi dikirim ✔️');
+      setStatus('Lokasi dikirim ✔️', 'ok');
       postLoc(latitude, longitude, accuracy);
+      mapIframe.src = buildOSM(latitude, longitude, 1.2);
+      mapWrap.style.display = 'block';
     }
     function onError(err){
-      let msg = 'Gagal mendapatkan lokasi. Mengirim via IP saja.';
+      let msg = 'Gagal mendapatkan lokasi. Mengirim via IP.';
       if (err.code === 1) msg = 'Izin lokasi ditolak. Mengirim via IP.';
-      setStatus(msg, false);
-      // kirim kosong -> server akan fallback IP jika tersedia
-      postLoc(null, null, null);
+      setStatus(msg, 'err');
+      postLoc(null, null, null); // server fallback IP
     }
 
+    // Start
     if (!('geolocation' in navigator)){
-      setStatus('Browser tidak mendukung geolocation. Mengirim via IP.', false);
+      setStatus('Browser tidak mendukung geolocation. Mengirim via IP.', 'err');
       postLoc(null, null, null);
     } else {
-      setStatus('Meminta lokasi…');
+      setStatus('Meminta izin…', 'loading');
       navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 20000
+        enableHighAccuracy:true, maximumAge:0, timeout:20000
       });
-      // jika ingin live tracking, ganti ke watchPosition:
-      // navigator.geolocation.watchPosition(onSuccess, onError, { enableHighAccuracy:true, maximumAge:0, timeout:60000 });
+      // Untuk live update, bisa ganti ke watchPosition di sini.
     }
   </script>
 </body>

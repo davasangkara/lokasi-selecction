@@ -24,7 +24,39 @@
     },
     "coba buka": {
       "created_at": "2025-08-11T21:18:19Z",
-      "hits": []
+      "hits": [
+        {
+          "id": "1637cb3c",
+          "ts": "2025-08-11T21:31:25Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        }
+      ]
+    },
+    "promosi-promo-bank-ABC": {
+      "created_at": "2025-08-11T21:40:42Z",
+      "hits": [
+        {
+          "id": "05eadd68",
+          "ts": "2025-08-11T21:41:07Z",
+          "ip": "127.0.0.1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "coords": {
+            "lat": -6.9559,
+            "lon": 107.6499,
+            "acc": 149033,
+            "source": "gps"
+          },
+          "ip_label": null
+        }
+      ]
     }
   }
 }

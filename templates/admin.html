@@ -1,113 +1,201 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>{{ app_name }} — Admin</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    :root{--bg:#0b1020;--card:#0f172a;--text:#e5e7eb}
+    :root{
+      --bg:#0b1020; --surface:#0f172a; --text:#e5e7eb;
+      --muted:#94a3b8; --card:rgba(255,255,255,.06);
+      --stroke:rgba(255,255,255,.12); --accent:#8b5cf6; --accent-2:#22d3ee;
+      --danger:#ef4444; --success:#22c55e;
+    }
     *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;font-family:system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#0b1020,#111827);color:var(--text)}
-    .wrap{max-width:1100px;margin:24px auto;padding:16px}
-    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
-    h1{margin:4px 0 10px}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    input,button{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#0f172a;color:#fff}
-    button{cursor:pointer}
-    a{color:#c7d2fe}
-    .grid{display:grid;gap:12px;grid-template-columns:320px 1fr}
-    .list{max-height:300px;overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px}
-    .item{padding:6px 8px;border-radius:8px}
-    .item.focus{background:rgba(96,165,250,.12)}
-    #map{height:420px;border-radius:14px;border:1px solid rgba(255,255,255,.08)}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}
-    .note{font-size:12px;opacity:.8}
+    body{
+      margin:0; min-height:100vh; color:var(--text);
+      font: 14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      background: radial-gradient(1200px 800px at 20% -10%, #1f2937 0%, #0b1020 40%, #0b1020 100%);
+    }
+    .container{max-width:1200px; margin:24px auto; padding:16px}
+    .header{
+      position: sticky; top:0; z-index:10;
+      background:linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.65));
+      backdrop-filter: blur(10px);
+      border:1px solid var(--stroke); border-radius:14px; padding:12px 14px; margin-bottom:14px;
+      display:flex; align-items:center; gap:12px; justify-content:space-between;
+    }
+    .brand{display:flex; align-items:center; gap:10px}
+    .brand .dot{width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+    .brand h1{font-size:16px; margin:0}
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+    .btn{
+      appearance:none; cursor:pointer; border-radius:10px; padding:9px 12px;
+      border:1px solid var(--stroke); background:var(--surface); color:var(--text);
+      transition:.2s transform ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2)); border-color:transparent}
+    .btn.danger{border-color: rgba(239,68,68,.35); background:#1b1111; color:#fecaca}
+    .btn.ghost{background:transparent}
+    .input{
+      width:260px; max-width:40vw; padding:10px 12px; border-radius:10px;
+      border:1px solid var(--stroke); background:#0b1324; color:var(--text);
+    }
+    .grid{display:grid; gap:16px; grid-template-columns: 320px 1fr}
+    @media (max-width: 960px){ .grid{grid-template-columns:1fr} }
+    .card{
+      background:var(--card); border:1px solid var(--stroke); border-radius:16px; padding:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    h3{margin:6px 0 10px; font-size:15px}
+    .list{max-height:440px; overflow:auto; display:flex; flex-direction:column; gap:8px}
+    .item{
+      padding:10px; border:1px solid var(--stroke); border-radius:12px; background:#0e162b;
+    }
+    .item.focus{outline:2px solid rgba(139,92,246,.45)}
+    .item .title{display:flex; align-items:center; gap:8px; justify-content:space-between}
+    .badge{font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--stroke); color:#cbd5e1}
+    .muted{color:var(--muted)}
+    #map{height:520px; border-radius:14px; border:1px solid var(--stroke)}
+    @media (max-width: 600px){ #map{height:360px} }
+    table{width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--stroke); border-radius:12px; overflow:hidden; margin-top:12px}
+    thead th{
+      position:sticky; top:0; background:#0e162b; color:#c7d2fe; text-align:left;
+      font-weight:600; font-size:12px; letter-spacing:.02em; border-bottom:1px solid var(--stroke); padding:10px 8px
+    }
+    tbody td{padding:10px 8px; border-bottom:1px solid rgba(255,255,255,.06)}
+    tbody tr:nth-child(odd){background:rgba(255,255,255,.02)}
+    tbody tr:hover{background:rgba(139,92,246,.10)}
+    code, .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .note{font-size:12px; color:var(--muted); margin-top:10px}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0}
+    .toast{
+      position: fixed; bottom:14px; right:14px; padding:10px 12px; border-radius:12px;
+      background:#0e162b; border:1px solid var(--stroke); display:none;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Admin Monitor</h1>
-
-      <form class="row" method="post" action="/admin">
-        <input type="text" name="slug" placeholder="Slug opsional (mis: promo-ig)" />
-        <button type="submit">Buat Link</button>
-        <span class="note">Link akan dibuat: <code>{{ base }}/t/&lt;token&gt;</code></span>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <div class="dot"></div>
+        <h1>Admin Monitor</h1>
+      </div>
+      <form class="actions" method="post" action="/admin">
+        <input class="input" type="text" name="slug" placeholder="Slug opsional (mis: promo-ig)" />
+        <button class="btn primary" type="submit">Buat Link</button>
+        <span class="note" style="align-self:center">Format: <code>{{ base }}/t/&lt;token&gt;</code></span>
       </form>
+    </div>
 
-      <div class="grid" style="margin-top:14px">
-        <div>
-          <h3>Channel</h3>
-          <div class="list">
-            {% for token, data in channels.items() %}
-              <div class="item {% if focus==token %}focus{% endif %}">
-                <div><strong>{{ token }}</strong> <span class="note">dibuat {{ data.created_at }}</span></div>
-                <div class="note">Share link: <a href="{{ base }}/t/{{ token }}" target="_blank">{{ base }}/t/{{ token }}</a></div>
-                <div class="note">Admin view: <a href="{{ base }}/admin/{{ token }}">{{ base }}/admin/{{ token }}</a></div>
+    <div class="grid">
+      <!-- Sidebar -->
+      <div class="card">
+        <h3>Channel</h3>
+        <div class="list">
+          {% for token, data in channels.items() %}
+            <div class="item {% if focus==token %}focus{% endif %}">
+              <div class="title">
+                <div><strong>{{ token }}</strong></div>
+                <span class="badge">{{ (data.hits|length) if data.hits else 0 }} hits</span>
               </div>
-            {% else %}
-              <div class="note">Belum ada channel. Buat dulu di atas.</div>
-            {% endfor %}
-          </div>
-        </div>
-
-        <div>
-          {% if focus %}
-            <h3>Live Map — <code>{{ focus }}</code></h3>
-            <div id="map"></div>
-            <div class="row" style="margin-top:10px">
-              <button id="clearBtn">Clear Data</button>
+              <div class="muted" style="margin-top:4px">dibuat {{ data.created_at }}</div>
+              <div class="muted" style="margin-top:6px">
+                Share: <a href="{{ base }}/t/{{ token }}" target="_blank">{{ base }}/t/{{ token }}</a>
+              </div>
+              <div class="muted">Admin: <a href="{{ base }}/admin/{{ token }}">{{ base }}/admin/{{ token }}</a></div>
+              <div style="display:flex; gap:8px; margin-top:8px">
+                <button class="btn" data-copy="{{ base }}/t/{{ token }}">Copy link</button>
+                <a class="btn ghost" href="{{ base }}/admin/{{ token }}">Buka</a>
+              </div>
             </div>
-
-            <table id="tbl">
-              <thead>
-                <tr>
-                  <th>Waktu (UTC)</th>
-                  <th>Sumber</th>
-                  <th>Lat</th>
-                  <th>Lon</th>
-                  <th>± (m)</th>
-                  <th>IP (label)</th>
-                  <th>UA</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
           {% else %}
-            <p class="note">Pilih salah satu channel di kiri untuk melihat peta & data.</p>
-          {% endif %}
+            <div class="note">Belum ada channel. Buat dulu di atas.</div>
+          {% endfor %}
         </div>
       </div>
 
-      <p class="note" style="margin-top:12px">
-        Catatan privasi: lokasi hanya terkirim jika user menekan “Allow” pada prompt lokasi. Sertakan pemberitahuan dan tujuan pengambilan lokasi pada halaman share.
-      </p>
+      <!-- Main -->
+      <div class="card">
+        {% if focus %}
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+            <h3 style="margin:0">Live Map — <code class="mono">{{ focus }}</code></h3>
+            <div class="toolbar">
+              <button id="fitBtn" class="btn">Fit markers</button>
+              <button id="pauseBtn" class="btn">Pause</button>
+              <button id="clearBtn" class="btn danger">Clear Data</button>
+            </div>
+          </div>
+
+          <div id="map"></div>
+
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th>Waktu (UTC)</th>
+                <th>Sumber</th>
+                <th>Lat</th>
+                <th>Lon</th>
+                <th>± (m)</th>
+                <th>IP (label)</th>
+                <th>UA</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <p class="note">
+            Privasi: lokasi hanya terkirim jika user menekan “Allow”. Cantumkan tujuan pengambilan lokasi pada halaman share.
+          </p>
+        {% else %}
+          <p class="note">Pilih salah satu channel di kiri untuk melihat peta & data.</p>
+        {% endif %}
+      </div>
     </div>
   </div>
+
+  <div id="toast" class="toast"></div>
 
   {% if focus %}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    // --- helpers UI ---
+    const toast = (msg)=>{ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); };
+    document.querySelectorAll('[data-copy]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        try{ await navigator.clipboard.writeText(b.dataset.copy); toast('Tersalin'); }catch{ toast('Gagal menyalin'); }
+      });
+    });
+
+    // --- map & polling ---
     const token = {{ focus|tojson }};
-    const map = L.map('map').setView([0,0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
-    let markers = {}; // id -> {marker,circle}
+    const map = L.map('map',{zoomControl:true}).setView([0,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'&copy; OpenStreetMap'
+    }).addTo(map);
 
     const tbody = document.querySelector('#tbl tbody');
-    let lastTs = null;
+    let lastTs = null, paused = false;
+    let markers = {};           // id -> {marker,circle}
+    let bounds = L.latLngBounds([]);
 
     function addRow(hit){
       const tr = document.createElement('tr');
+      const lat = hit.coords.lat, lon = hit.coords.lon, acc = hit.coords.acc ?? '-';
+      const src = hit.coords.source || '-';
+      const ipLabel = hit.ip + (hit.ip_label ? ` (${hit.ip_label})` : '');
       tr.innerHTML = `
-        <td>${hit.ts}</td>
-        <td>${hit.coords.source || '-'}</td>
-        <td>${hit.coords.lat?.toFixed(6) ?? '-'}</td>
-        <td>${hit.coords.lon?.toFixed(6) ?? '-'}</td>
-        <td>${hit.coords.acc ?? '-'}</td>
-        <td>${hit.ip}${hit.ip_label ? ' ('+hit.ip_label+')' : ''}</td>
-        <td>${(hit.ua||'').slice(0,60)}</td>
+        <td class="mono">${hit.ts}</td>
+        <td>${src}</td>
+        <td class="mono">${lat!=null ? lat.toFixed(6) : '-'}</td>
+        <td class="mono">${lon!=null ? lon.toFixed(6) : '-'}</td>
+        <td class="mono">${acc}</td>
+        <td class="mono" title="${ipLabel}">${ipLabel}</td>
+        <td title="${hit.ua||''}">${(hit.ua||'').slice(0,80)}</td>
       `;
       tbody.prepend(tr);
     }
@@ -115,45 +203,45 @@
     function addPoint(hit){
       const lat = hit.coords.lat, lon = hit.coords.lon;
       if (lat==null || lon==null) return;
-      const acc = hit.coords.acc || 0;
 
+      const acc = Math.max(0, hit.coords.acc || 0);
       const m = L.marker([lat,lon]).addTo(map);
-      const c = L.circle([lat,lon], { radius: Math.max(5, acc) }).addTo(map);
+      const c = L.circle([lat,lon], { radius: Math.max(5, acc), color:'#8b5cf6', fillColor:'#8b5cf6', fillOpacity:.15 }).addTo(map);
       markers[hit.id] = {marker:m, circle:c};
+      bounds.extend([lat,lon]);
     }
 
     async function fetchUpdates(){
+      if (paused) return;
       const url = lastTs ? `/api/locations/${token}?since=${encodeURIComponent(lastTs)}` : `/api/locations/${token}`;
-      const r = await fetch(url);
-      const j = await r.json();
-      if (!j.ok) return;
-      const hits = j.hits || [];
-      if (!lastTs && hits.length){
-        // center to last
-        const h = hits[hits.length-1];
-        if (h.coords && h.coords.lat != null){
-          map.setView([h.coords.lat, h.coords.lon], 15);
+      try{
+        const r = await fetch(url);
+        const j = await r.json();
+        if (!j.ok) return;
+        const hits = j.hits || [];
+        if (!lastTs && hits.length){
+          hits.forEach(addRow);
+          hits.forEach(addPoint);
+          if (bounds.isValid()) map.fitBounds(bounds.pad(0.25));
+        } else if (hits.length){
+          hits.forEach(h=>{ addRow(h); addPoint(h); });
         }
-        // fill table initial
-        hits.forEach(addRow);
-        hits.forEach(addPoint);
-      } else if (hits.length){
-        hits.forEach(h=>{ addRow(h); addPoint(h); });
-      }
-      if (hits.length){
-        lastTs = hits[hits.length-1].ts;
-      }
+        if (hits.length){ lastTs = hits[hits.length-1].ts; }
+      }catch(e){}
     }
 
-    setInterval(fetchUpdates, 3000);
+    const interval = setInterval(fetchUpdates, 2500);
     fetchUpdates();
 
+    // toolbar buttons
+    document.getElementById('fitBtn').onclick = ()=>{ if (bounds.isValid()) map.fitBounds(bounds.pad(0.25)); };
+    document.getElementById('pauseBtn').onclick = (e)=>{ paused = !paused; e.target.textContent = paused ? 'Resume' : 'Pause'; };
     document.getElementById('clearBtn').onclick = async ()=>{
       await fetch(`/api/clear/${token}`, {method:'POST'});
       tbody.innerHTML = '';
       Object.values(markers).forEach(({marker,circle})=>{ map.removeLayer(marker); map.removeLayer(circle); });
-      markers = {};
-      lastTs = null;
+      markers = {}; bounds = L.latLngBounds([]); lastTs = null;
+      toast('Data dibersihkan');
     };
   </script>
   {% endif %}

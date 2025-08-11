@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ app_name }} — Lokasi</title>
+  <style>
+    :root{--bg:#0b1020;--card:#0f172a;--text:#e5e7eb}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#0b1020,#111827);color:var(--text)}
+    .wrap{max-width:600px;margin:32px auto;padding:16px}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
+    h1{margin:0 0 8px;font-size:clamp(22px,3vw,28px)}
+    .note{font-size:13px;opacity:.9}
+    .badge{display:inline-block;font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18)}
+    .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:10px}
+    .stat{background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Konfirmasi Lokasi</h1>
+      <p class="note">Untuk melanjutkan, izinkan akses lokasi. Kami hanya mengirimkan titik koordinat & akurasi untuk keperluan verifikasi kunjungan.</p>
+      <div class="badge" id="status">Menunggu izin…</div>
+
+      <div class="grid">
+        <div class="stat"><div>Latitude</div><strong id="lat">-</strong></div>
+        <div class="stat"><div>Longitude</div><strong id="lon">-</strong></div>
+        <div class="stat"><div>Akurasi</div><strong><span id="acc">-</span> m</strong></div>
+        <div class="stat"><div>Update</div><strong id="ts">-</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = {{ token|tojson }};
+    const base = {{ base|tojson }};
+
+    const statusEl = document.getElementById('status');
+    const latEl = document.getElementById('lat');
+    const lonEl = document.getElementById('lon');
+    const accEl = document.getElementById('acc');
+    const tsEl  = document.getElementById('ts');
+
+    function setStatus(t, ok=true){ statusEl.textContent=t; statusEl.style.borderColor = ok?'rgba(96,165,250,.45)':'rgba(248,113,113,.45)'; }
+
+    async function postLoc(lat, lon, acc){
+      try{
+        await fetch(`${base}/api/track/${token}`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ lat, lon, acc })
+        });
+      }catch(e){}
+    }
+
+    function onSuccess(pos){
+      const { latitude, longitude, accuracy } = pos.coords;
+      const ts = new Date(pos.timestamp);
+      latEl.textContent = latitude.toFixed(6);
+      lonEl.textContent = longitude.toFixed(6);
+      accEl.textContent = (accuracy||0).toFixed(1);
+      tsEl.textContent = ts.toLocaleString();
+      setStatus('Lokasi dikirim ✔️');
+      postLoc(latitude, longitude, accuracy);
+    }
+    function onError(err){
+      let msg = 'Gagal mendapatkan lokasi. Mengirim via IP saja.';
+      if (err.code === 1) msg = 'Izin lokasi ditolak. Mengirim via IP.';
+      setStatus(msg, false);
+      // kirim kosong -> server akan fallback IP jika tersedia
+      postLoc(null, null, null);
+    }
+
+    if (!('geolocation' in navigator)){
+      setStatus('Browser tidak mendukung geolocation. Mengirim via IP.', false);
+      postLoc(null, null, null);
+    } else {
+      setStatus('Meminta lokasi…');
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 20000
+      });
+      // jika ingin live tracking, ganti ke watchPosition:
+      // navigator.geolocation.watchPosition(onSuccess, onError, { enableHighAccuracy:true, maximumAge:0, timeout:60000 });
+    }
+  </script>
+</body>
+</html>

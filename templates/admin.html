@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ app_name }} — Admin</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root{--bg:#0b1020;--card:#0f172a;--text:#e5e7eb}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#0b1020,#111827);color:var(--text)}
+    .wrap{max-width:1100px;margin:24px auto;padding:16px}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
+    h1{margin:4px 0 10px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    input,button{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#0f172a;color:#fff}
+    button{cursor:pointer}
+    a{color:#c7d2fe}
+    .grid{display:grid;gap:12px;grid-template-columns:320px 1fr}
+    .list{max-height:300px;overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px}
+    .item{padding:6px 8px;border-radius:8px}
+    .item.focus{background:rgba(96,165,250,.12)}
+    #map{height:420px;border-radius:14px;border:1px solid rgba(255,255,255,.08)}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}
+    .note{font-size:12px;opacity:.8}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Admin Monitor</h1>
+
+      <form class="row" method="post" action="/admin">
+        <input type="text" name="slug" placeholder="Slug opsional (mis: promo-ig)" />
+        <button type="submit">Buat Link</button>
+        <span class="note">Link akan dibuat: <code>{{ base }}/t/&lt;token&gt;</code></span>
+      </form>
+
+      <div class="grid" style="margin-top:14px">
+        <div>
+          <h3>Channel</h3>
+          <div class="list">
+            {% for token, data in channels.items() %}
+              <div class="item {% if focus==token %}focus{% endif %}">
+                <div><strong>{{ token }}</strong> <span class="note">dibuat {{ data.created_at }}</span></div>
+                <div class="note">Share link: <a href="{{ base }}/t/{{ token }}" target="_blank">{{ base }}/t/{{ token }}</a></div>
+                <div class="note">Admin view: <a href="{{ base }}/admin/{{ token }}">{{ base }}/admin/{{ token }}</a></div>
+              </div>
+            {% else %}
+              <div class="note">Belum ada channel. Buat dulu di atas.</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div>
+          {% if focus %}
+            <h3>Live Map — <code>{{ focus }}</code></h3>
+            <div id="map"></div>
+            <div class="row" style="margin-top:10px">
+              <button id="clearBtn">Clear Data</button>
+            </div>
+
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th>Waktu (UTC)</th>
+                  <th>Sumber</th>
+                  <th>Lat</th>
+                  <th>Lon</th>
+                  <th>± (m)</th>
+                  <th>IP (label)</th>
+                  <th>UA</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          {% else %}
+            <p class="note">Pilih salah satu channel di kiri untuk melihat peta & data.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <p class="note" style="margin-top:12px">
+        Catatan privasi: lokasi hanya terkirim jika user menekan “Allow” pada prompt lokasi. Sertakan pemberitahuan dan tujuan pengambilan lokasi pada halaman share.
+      </p>
+    </div>
+  </div>
+
+  {% if focus %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const token = {{ focus|tojson }};
+    const map = L.map('map').setView([0,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
+    let markers = {}; // id -> {marker,circle}
+
+    const tbody = document.querySelector('#tbl tbody');
+    let lastTs = null;
+
+    function addRow(hit){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${hit.ts}</td>
+        <td>${hit.coords.source || '-'}</td>
+        <td>${hit.coords.lat?.toFixed(6) ?? '-'}</td>
+        <td>${hit.coords.lon?.toFixed(6) ?? '-'}</td>
+        <td>${hit.coords.acc ?? '-'}</td>
+        <td>${hit.ip}${hit.ip_label ? ' ('+hit.ip_label+')' : ''}</td>
+        <td>${(hit.ua||'').slice(0,60)}</td>
+      `;
+      tbody.prepend(tr);
+    }
+
+    function addPoint(hit){
+      const lat = hit.coords.lat, lon = hit.coords.lon;
+      if (lat==null || lon==null) return;
+      const acc = hit.coords.acc || 0;
+
+      const m = L.marker([lat,lon]).addTo(map);
+      const c = L.circle([lat,lon], { radius: Math.max(5, acc) }).addTo(map);
+      markers[hit.id] = {marker:m, circle:c};
+    }
+
+    async function fetchUpdates(){
+      const url = lastTs ? `/api/locations/${token}?since=${encodeURIComponent(lastTs)}` : `/api/locations/${token}`;
+      const r = await fetch(url);
+      const j = await r.json();
+      if (!j.ok) return;
+      const hits = j.hits || [];
+      if (!lastTs && hits.length){
+        // center to last
+        const h = hits[hits.length-1];
+        if (h.coords && h.coords.lat != null){
+          map.setView([h.coords.lat, h.coords.lon], 15);
+        }
+        // fill table initial
+        hits.forEach(addRow);
+        hits.forEach(addPoint);
+      } else if (hits.length){
+        hits.forEach(h=>{ addRow(h); addPoint(h); });
+      }
+      if (hits.length){
+        lastTs = hits[hits.length-1].ts;
+      }
+    }
+
+    setInterval(fetchUpdates, 3000);
+    fetchUpdates();
+
+    document.getElementById('clearBtn').onclick = async ()=>{
+      await fetch(`/api/clear/${token}`, {method:'POST'});
+      tbody.innerHTML = '';
+      Object.values(markers).forEach(({marker,circle})=>{ map.removeLayer(marker); map.removeLayer(circle); });
+      markers = {};
+      lastTs = null;
+    };
+  </script>
+  {% endif %}
+</body>
+</html>

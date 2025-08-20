@@ -87,6 +87,8 @@ def get_client_ip(req):
         v = req.headers.get(h)
         if v:
             return v.split(",")[0].strip()
+        if v:
+            return v.split(",")[0].strip()
     return req.remote_addr
 
 def is_private_ip(ip: str) -> bool:
@@ -310,6 +312,7 @@ def api_track(token):
     lon = body.get("lon")
     acc = body.get("acc")
     src = "gps" if lat is not None and lon is not None else None
+    src = "gps" if lat is not None and lon is not None else None
 
     ip_meta = None
     if (lat is None or lon is None) and ip and not is_private_ip(ip):
@@ -319,6 +322,7 @@ def api_track(token):
             ip_meta = meta
             src = meta["source"]
 
+    hit_id = uuid4().hex[:8]
     hit_id = uuid4().hex[:8]
     item = {
         "id": hit_id,
@@ -380,10 +384,13 @@ def api_photo(token, hit_id):
         "place": place,
         "parent_id": hit_id
     }
+    STORE["channels"][token]["hits"].append(item)
+    STORE["channels"][token]["hits"] = STORE["channels"][token]["hits"][-1000:]
 
     STORE["channels"][token]["hits"].append(photo_hit)
     trim_channel(token)
     save_store()
+    return jsonify({"ok": True, "id": hit_id})
     return jsonify({"ok": True, "photo_url": photo_url}), 200
 
 @app.route("/api/locations/<token>")
@@ -447,4 +454,5 @@ def health():
     return "ok", 200
 
 if __name__ == "__main__":
+    # Lokal: http://127.0.0.1:5055
     app.run(host="127.0.0.1", port=PORT, debug=True)

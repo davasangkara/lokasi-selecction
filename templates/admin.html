@@ -13,10 +13,12 @@
     .header{ position: sticky; top:0; z-index:10; background:linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.65)); backdrop-filter: blur(10px); border:1px solid var(--stroke); border-radius:14px; padding:12px 14px; margin-bottom:14px; display:flex; align-items:center; gap:12px; justify-content:space-between; }
     .brand{display:flex; align-items:center; gap:10px}
     .brand .dot{width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent2))}
+    .brand .dot{width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent2))}
     .brand h1{font-size:16px; margin:0}
     .actions{display:flex; gap:8px; flex-wrap:wrap}
     .btn{ appearance:none; cursor:pointer; border-radius:10px; padding:9px 12px; border:1px solid var(--stroke); background:var(--surface); color:var(--text); transition:.2s transform ease; }
     .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2)); border-color:transparent}
     .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2)); border-color:transparent}
     .btn.danger{border-color: rgba(239,68,68,.35); background:#1b1111; color:#fecaca}
     .btn.ghost{background:transparent}
@@ -26,6 +28,7 @@
     .card{ background:var(--card); border:1px solid var(--stroke); border-radius:16px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
     h3{margin:6px 0 10px; font-size:15px}
     .list{max-height:440px; overflow:auto; display:flex; flex-direction:column; gap:8px}
+    .item{padding:10px; border:1px solid var(--stroke); border-radius:12px; background:#0e162b;}
     .item{padding:10px; border:1px solid var(--stroke); border-radius:12px; background:#0e162b;}
     .item.focus{outline:2px solid rgba(139,92,246,.45)}
     .item .title{display:flex; align-items:center; gap:8px; justify-content:space-between}
@@ -107,6 +110,7 @@
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
             <h3 style="margin:0">Live Map — <code class="mono">{{ focus }}</code></h3>
             <div class="toolbar">
+              <button id="photosBtn" class="btn">Photos</button>
               <button id="photosBtn" class="btn">Photos</button>
               <button id="fitBtn" class="btn">Fit markers</button>
               <button id="pauseBtn" class="btn">Pause</button>
@@ -468,6 +472,7 @@
       tbody.innerHTML = '';
       Object.values(markers).forEach(({marker,circle})=>{ map.removeLayer(marker); map.removeLayer(circle); });
       markers = {}; bounds = L.latLngBounds([]); lastTs = null;
+      photoHits = []; closeModal();
       photoHits = []; closeModal();
       toast('Data dibersihkan');
     };

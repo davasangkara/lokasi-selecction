@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: geo-monitor
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -k gthread -t 120 -b 0.0.0.0:$PORT app:app
+    autoDeploy: true
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: ADMIN_USER
+        value: admin        # ganti di dashboard (gunakan Secret)
+      - key: ADMIN_PASS
+        value: superRahasia # ganti di dashboard (gunakan Secret)
+      - key: DATA_FILE
+        value: /data/store.json
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      - key: REVERSE_GEOCODE
+        value: "true"
+      - key: MAX_HITS_PER_CHANNEL
+        value: "4000"
+      - key: MAX_SESSIONS_PER_CH
+        value: "500"
+      - key: MAX_SIGNAL_PER_MB
+        value: "200"
+      - key: TTL_DAYS
+        value: "0"
